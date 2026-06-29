@@ -97,6 +97,38 @@ body { font-family:'Noto Sans SC', system-ui, sans-serif; -webkit-font-smoothing
 .typing-dot:nth-child(2){animation-delay:0.2s;} .typing-dot:nth-child(3){animation-delay:0.4s;}
 @keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:.4;} 30%{transform:translateY(-6px);opacity:1;} }
 .matrix-cell { width:10px; height:10px; border-radius:2px; }
+canvas { max-width:100%; max-height:400px; }
+.bg-white.rounded-2xl:has(> canvas) { overflow:hidden; }
+/* ============ V3 优化新增样式 ============ */
+.mission-step { display:flex; align-items:center; gap:0.5rem; position:relative; }
+.mission-step-dot { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; transition:all .3s; }
+.mission-step-dot.completed { background:#10b981; color:white; box-shadow:0 0 0 3px rgba(16,185,129,0.15); }
+.mission-step-dot.current { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:white; box-shadow:0 0 0 3px rgba(139,92,246,0.2); animation:pulse 1.8s infinite; }
+.mission-step-dot.pending { background:#f1f5f9; color:#94a3b8; border:1.5px dashed #cbd5e1; }
+.mission-step-line { flex:1; height:2px; background:#e2e8f0; min-width:18px; }
+.mission-step-line.completed { background:linear-gradient(90deg,#10b981,#34d399); }
+.mission-step-label { font-size:10px; font-weight:500; }
+.mission-step-time { font-size:9px; color:#94a3b8; font-family:'JetBrains Mono',monospace; }
+.mission-card { transition:all .25s; }
+.mission-card:hover { transform:translateY(-2px); box-shadow:0 12px 30px -10px rgba(15,23,42,.15); }
+.mission-tab { padding:0.5rem 1rem; font-size:0.875rem; color:#64748b; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; font-weight:500; }
+.mission-tab:hover { color:#475569; }
+.mission-tab.active { color:#7c3aed; border-bottom-color:#7c3aed; }
+.dna-tab { padding:0.4rem 0.8rem; font-size:0.75rem; color:#64748b; cursor:pointer; border-radius:6px; transition:all .2s; font-weight:500; display:flex; align-items:center; gap:0.35rem; }
+.dna-tab:hover { background:rgba(139,92,246,0.06); color:#7c3aed; }
+.dna-tab.active { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:white; box-shadow:0 2px 8px rgba(139,92,246,0.25); }
+.confidence-ring { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; position:relative; }
+.lifecycle-step { display:flex; gap:0.75rem; padding:0.5rem 0; position:relative; }
+.lifecycle-step::before { content:''; position:absolute; left:9px; top:1.4rem; bottom:-0.5rem; width:2px; background:#e2e8f0; }
+.lifecycle-step:last-child::before { display:none; }
+.lifecycle-dot { width:20px; height:20px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+.exec-card-pulse { position:relative; }
+.exec-card-pulse::before { content:''; position:absolute; top:-2px; left:-2px; right:-2px; bottom:-2px; border-radius:14px; background:linear-gradient(135deg,rgba(139,92,246,0.4),rgba(99,102,241,0.2)); z-index:-1; opacity:0; animation:aiPulse 2.4s ease-in-out infinite; }
+.quick-approve-btn { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:white; box-shadow:0 2px 8px rgba(139,92,246,0.25); transition:all .2s; }
+.quick-approve-btn:hover { box-shadow:0 4px 16px rgba(139,92,246,0.4); transform:translateY(-1px); }
+.kpi-up { color:#10b981; }
+.kpi-down { color:#f43f5e; }
+.kpi-flat { color:#64748b; }
 </style>
 </head>
 <body class="text-ink-800">
@@ -313,62 +345,74 @@ body { font-family:'Noto Sans SC', system-ui, sans-serif; -webkit-font-smoothing
     <!-- 左侧导航 -->
     <aside id="sidebar" class="w-60 bg-white border-r border-ink-200 overflow-y-auto scrollbar-thin hidden lg:block">
       <nav class="p-3 space-y-1">
-        <div class="px-2 py-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-wider">AI 交互层</div>
+        <!-- 工作台（AI-Native 核心入口） -->
+        <div class="px-2 py-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fas fa-sparkles text-ai-400"></i> 工作台
+        </div>
         <div class="sidebar-item active flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="home" onclick="navigate('home')">
-          <i class="fas fa-house text-base w-5 text-center"></i><span>任务流首页</span>
+          <i class="fas fa-bullseye text-base w-5 text-center text-ai-500"></i><span>Today Mission</span>
           <span class="ml-auto bg-danger-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">9</span>
         </div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="agents" onclick="navigate('agents')">
-          <i class="fas fa-robot text-base w-5 text-center"></i><span>数字员工工作台</span>
-          <span class="ml-auto w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="mission-center" onclick="navigate('mission-center')">
+          <i class="fas fa-arrows-spin text-base w-5 text-center text-ai-500"></i><span>AI 执行中心</span>
+          <span class="ml-auto bg-gradient-to-r from-ai-500 to-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">NEW</span>
         </div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="knowledge" onclick="navigate('knowledge')">
-          <i class="fas fa-brain text-base w-5 text-center"></i><span>企业知识库</span>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="agents" onclick="navigate('agents')">
+          <i class="fas fa-robot text-base w-5 text-center"></i><span>数字员工</span>
+          <span class="ml-auto w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse"></span>
         </div>
 
-        <div class="px-2 py-1.5 mt-3 text-[10px] font-bold text-ink-400 uppercase tracking-wider">业务执行层</div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="dashboard" onclick="navigate('dashboard')">
-          <i class="fas fa-chart-line text-base w-5 text-center"></i><span>数据看板</span>
-        </div>
+        <!-- 运营层（传统模块降级为查看/配置） -->
+        <div class="px-2 py-1.5 mt-3 text-[10px] font-bold text-ink-400 uppercase tracking-wider">运营层</div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="orders" onclick="navigate('orders')">
-          <i class="fas fa-file-invoice text-base w-5 text-center"></i><span>订单中心</span>
+          <i class="fas fa-file-invoice text-base w-5 text-center"></i><span>客户与订单</span>
           <span class="ml-auto text-[10px] text-ink-400">14</span>
         </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="production" onclick="navigate('production')">
-          <i class="fas fa-industry text-base w-5 text-center"></i><span>生产管理</span>
+          <i class="fas fa-industry text-base w-5 text-center"></i><span>生产与排产</span>
         </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="inventory" onclick="navigate('inventory')">
-          <i class="fas fa-boxes-stacked text-base w-5 text-center"></i><span>进销存</span>
+          <i class="fas fa-boxes-stacked text-base w-5 text-center"></i><span>库存与采购</span>
           <span class="ml-auto bg-warn-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">2</span>
         </div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="pattern" onclick="navigate('pattern')">
-          <i class="fas fa-drafting-compass text-base w-5 text-center"></i><span>版单开发</span>
-        </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="qc" onclick="navigate('qc')">
-          <i class="fas fa-shield-halved text-base w-5 text-center"></i><span>品控中心</span>
+          <i class="fas fa-shield-halved text-base w-5 text-center"></i><span>质量与品控</span>
           <span class="ml-auto bg-danger-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">2</span>
         </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="finance" onclick="navigate('finance')">
-          <i class="fas fa-coins text-base w-5 text-center"></i><span>财务结算</span>
+          <i class="fas fa-coins text-base w-5 text-center"></i><span>财务与结算</span>
+        </div>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="outsourcing" onclick="navigate('outsourcing')">
+          <i class="fas fa-truck-fast text-base w-5 text-center"></i><span>外协与分销</span>
         </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="approval" onclick="navigate('approval')">
           <i class="fas fa-check-to-slot text-base w-5 text-center"></i><span>审批中心</span>
           <span class="ml-auto bg-brand-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">4</span>
         </div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="outsourcing" onclick="navigate('outsourcing')">
-          <i class="fas fa-truck-fast text-base w-5 text-center"></i><span>外协管理</span>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="pattern" onclick="navigate('pattern')">
+          <i class="fas fa-drafting-compass text-base w-5 text-center"></i><span>版单开发</span>
         </div>
-        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="distribution" onclick="navigate('distribution')">
-          <i class="fas fa-network-wired text-base w-5 text-center"></i><span>分销网络</span>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="dashboard" onclick="navigate('dashboard')">
+          <i class="fas fa-chart-line text-base w-5 text-center"></i><span>数据看板</span>
         </div>
 
-        <div class="px-2 py-1.5 mt-3 text-[10px] font-bold text-ink-400 uppercase tracking-wider">AI 智能层</div>
+        <!-- 知识层（升级为 Factory Brain） -->
+        <div class="px-2 py-1.5 mt-3 text-[10px] font-bold text-ink-400 uppercase tracking-wider">知识层</div>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="knowledge" onclick="navigate('knowledge')">
+          <i class="fas fa-brain text-base w-5 text-center text-ai-500"></i><span>Factory Brain</span>
+        </div>
+
+        <!-- 智能层（升级） -->
+        <div class="px-2 py-1.5 mt-3 text-[10px] font-bold text-ink-400 uppercase tracking-wider">智能层</div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="alerts" onclick="navigate('alerts')">
-          <i class="fas fa-triangle-exclamation text-base w-5 text-center"></i><span>预警中心</span>
+          <i class="fas fa-triangle-exclamation text-base w-5 text-center text-danger-500"></i><span>风险中心</span>
           <span class="ml-auto bg-danger-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">3</span>
         </div>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="ai-decisions" onclick="navigate('ai-decisions')">
+          <i class="fas fa-bullseye text-base w-5 text-center text-ai-500"></i><span>AI 决策中心</span>
+        </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="evolution" onclick="navigate('evolution')">
-          <i class="fas fa-dna text-base w-5 text-center"></i><span>AI 自我进化</span>
+          <i class="fas fa-dna text-base w-5 text-center"></i><span>AI 进化中心</span>
         </div>
         <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="org" onclick="navigate('org')">
           <i class="fas fa-users-gear text-base w-5 text-center"></i><span>组织权限</span>
@@ -690,45 +734,391 @@ const inventory = [
 ];
 
 const aiDecisions = [
-  {id:'DEC-20260629-001', time:'08:30', agent:'排产Agent', type:'排产调整', suggestion:'订单HT-2026-0625-002提前到本周五开工', confidence:92, userAction:'采纳', result:'已执行', feedback:5},
-  {id:'DEC-20260629-002', time:'09:15', agent:'采购Agent', type:'采购建议', suggestion:'黑色涤纶面料紧急采购，供应商A有现货', confidence:88, userAction:'采纳', result:'已下单', feedback:5},
-  {id:'DEC-20260629-003', time:'10:00', agent:'品控Agent', type:'质量预警', suggestion:'缝制B组返工率异常，已生成根因分析', confidence:94, userAction:'采纳', result:'整改中', feedback:4},
-  {id:'DEC-20260629-004', time:'11:20', agent:'交期Agent', type:'交期预警', suggestion:'订单HT-2026-0615-001预计延期3天', confidence:89, userAction:'待确认', result:'-', feedback:null},
-  {id:'DEC-20260629-005', time:'14:30', agent:'经营Agent', type:'经营洞察', suggestion:'本月毛利率归因完成', confidence:91, userAction:'采纳', result:'已生成报告', feedback:5},
-  {id:'DEC-20260629-006', time:'15:45', agent:'排产Agent', type:'产能优化', suggestion:'外协30%缝制产能给佛山金辉', confidence:85, userAction:'采纳', result:'已分配', feedback:4}
+  {id:'DEC-20260629-001', time:'08:30', agent:'排产Agent', type:'排产调整', suggestion:'订单HT-2026-0625-002提前到本周五开工', confidence:92, userAction:'采纳', result:'已执行', feedback:5, expectedEffect:'设备利用率+5%', actualEffect:'设备利用率+5.2%', effective:true, cost:0},
+  {id:'DEC-20260629-002', time:'09:15', agent:'采购Agent', type:'采购建议', suggestion:'黑色涤纶面料紧急采购，供应商A有现货', confidence:88, userAction:'采纳', result:'已下单', feedback:5, expectedEffect:'避免停产损失', actualEffect:'挽回延期2天', effective:true, cost:2850},
+  {id:'DEC-20260629-003', time:'10:00', agent:'品控Agent', type:'质量预警', suggestion:'缝制B组返工率异常，已生成根因分析', confidence:94, userAction:'采纳', result:'整改中', feedback:4, expectedEffect:'返工率↓40%', actualEffect:'返工率↓35%（进行中）', effective:true, cost:800},
+  {id:'DEC-20260629-004', time:'11:20', agent:'交期Agent', type:'交期预警', suggestion:'订单HT-2026-0615-001预计延期3天', confidence:89, userAction:'待确认', result:'-', feedback:null, expectedEffect:'追回2天延期', actualEffect:'-', effective:false, cost:0},
+  {id:'DEC-20260629-005', time:'14:30', agent:'经营Agent', type:'经营洞察', suggestion:'本月毛利率归因完成', confidence:91, userAction:'采纳', result:'已生成报告', feedback:5, expectedEffect:'识别关键归因', actualEffect:'识别4项关键问题', effective:true, cost:0},
+  {id:'DEC-20260629-006', time:'15:45', agent:'排产Agent', type:'产能优化', suggestion:'外协30%缝制产能给佛山金辉', confidence:85, userAction:'采纳', result:'已分配', feedback:4, expectedEffect:'产能利用率+12%', actualEffect:'产能利用率+9%', effective:false, cost:9000},
+  {id:'DEC-20260628-007', time:'09:00', agent:'采购Agent', type:'价格策略', suggestion:'锁定聚酯面料Q3合同', confidence:86, userAction:'采纳', result:'已签约', feedback:5, expectedEffect:'月节省¥15,000', actualEffect:'月节省¥14,800', effective:true, cost:0},
+  {id:'DEC-20260628-008', time:'11:30', agent:'品控Agent', type:'工艺优化', suggestion:'调整缝纫机张力参数', confidence:88, userAction:'采纳', result:'已应用', feedback:5, expectedEffect:'返工率↓25%', actualEffect:'返工率↓22%', effective:true, cost:0}
+];
+
+const missionCenterData = {
+  // 待审批（AI方案生成完毕，待人工确认）
+  pending: [
+    {
+      id:'MSN-20260629-001',
+      title:'黑色涤纶面料补货闭环',
+      type:'采购',
+      trigger:'库存预警 ALT-002',
+      agent:'AI采购员',
+      agentIcon:'fa-cart-shopping',
+      agentColor:'emerald',
+      priority:'P0',
+      progress:60,
+      createdAt:'08:30',
+      problem:'黑色涤纶面料库存120m，低于安全线200m，预计周三断货，影响订单HT-0615-001',
+      rootCause:'订单HT-0615-001加急领料 + 本周新增3个订单使用该面料 + 供应商交期延长至7天',
+      solution:{
+        name:'紧急采购 100m（供应商 S001 绍兴盛泰）',
+        cost:'+¥2,850',
+        effect:'2天到货，库存恢复至220m',
+        score:92,
+        confidence:92
+      },
+      alternativeSolutions:[
+        {name:'等待 Q3 合同面料', cost:'¥0', effect:'需等5天', score:62},
+        {name:'从订单HT-005调剂', cost:'¥0', effect:'仅够用3天', score:78}
+      ],
+      expectedResult:'2天到货后库存恢复至220m，HT-0615-001顺利推进',
+      steps:[
+        { name:'发现', status:'completed', time:'08:30' },
+        { name:'分析', status:'completed', time:'08:31' },
+        { name:'方案', status:'completed', time:'08:32' },
+        { name:'审批', status:'current', time:null },
+        { name:'执行', status:'pending', time:null },
+        { name:'验证', status:'pending', time:null }
+      ]
+    },
+    {
+      id:'MSN-20260629-002',
+      title:'订单HT-0615-001延期风险解除',
+      type:'排产',
+      trigger:'交期预警 ALT-001',
+      agent:'AI计划员',
+      agentIcon:'fa-calendar-check',
+      agentColor:'blue',
+      priority:'P0',
+      progress:55,
+      createdAt:'08:15',
+      problem:'订单HT-2026-0615-001预计延期3天，影响客户优品服饰交期（7/8）',
+      rootCause:'客户临时提前交期 + 领料超计划40% + 面料库存快速消耗 + 采购周期未调整',
+      solution:{
+        name:'从订单HT-005调剂 200m 面料（零成本）',
+        cost:'¥0',
+        effect:'追回2天延期，不影响HT-005',
+        score:96,
+        confidence:96
+      },
+      alternativeSolutions:[
+        {name:'紧急采购', cost:'+¥2,400', effect:'追回1天', score:75},
+        {name:'外协部分产能', cost:'+¥4,500', effect:'追回2天', score:70},
+        {name:'与客户协商延期1天', cost:'-满意度5%', effect:'减轻压力', score:60}
+      ],
+      expectedResult:'延期从3天降为1天，客户满意度影响<5%',
+      steps:[
+        { name:'发现', status:'completed', time:'08:15' },
+        { name:'分析', status:'completed', time:'08:18' },
+        { name:'方案', status:'completed', time:'08:22' },
+        { name:'审批', status:'current', time:null },
+        { name:'执行', status:'pending', time:null },
+        { name:'验证', status:'pending', time:null }
+      ]
+    },
+    {
+      id:'MSN-20260629-003',
+      title:'缝制B组返工率整改',
+      type:'品控',
+      trigger:'质量异常 ALT-003',
+      agent:'AI品控员',
+      agentIcon:'fa-shield-halved',
+      agentColor:'rose',
+      priority:'P1',
+      progress:50,
+      createdAt:'10:00',
+      problem:'缝制B组返工率7%（正常3%），高于基准线132%',
+      rootCause:'新员工占比40% + 面料缩率异常 + 设备张力未调整',
+      solution:{
+        name:'组合方案：调2名熟练工 + 调整设备张力 + 增加预缩工序',
+        cost:'+¥1,100',
+        effect:'返工率↓40%，恢复至3.2%',
+        score:95,
+        confidence:91
+      },
+      alternativeSolutions:[
+        {name:'仅调熟练工', cost:'+¥800', effect:'返工率↓30%', score:85},
+        {name:'仅调整设备', cost:'¥0', effect:'返工率↓25%', score:75}
+      ],
+      expectedResult:'本周内返工率恢复至3.2%，不影响HT-0618-003交期',
+      steps:[
+        { name:'发现', status:'completed', time:'10:00' },
+        { name:'分析', status:'completed', time:'10:05' },
+        { name:'方案', status:'completed', time:'10:12' },
+        { name:'审批', status:'current', time:null },
+        { name:'执行', status:'pending', time:null },
+        { name:'验证', status:'pending', time:null }
+      ]
+    }
+  ],
+  // 执行中（已批准，AI正在自动执行）
+  executing: [
+    {
+      id:'MSN-20260629-004',
+      title:'30天排产方案发布',
+      type:'排产',
+      agent:'AI计划员',
+      agentIcon:'fa-calendar-check',
+      agentColor:'blue',
+      progress:83,
+      currentStep:'执行',
+      steps:[
+        { name:'发现', status:'completed', time:'06:00' },
+        { name:'分析', status:'completed', time:'06:15' },
+        { name:'方案', status:'completed', time:'06:30' },
+        { name:'审批', status:'completed', time:'08:00', approver:'李建国' },
+        { name:'执行', status:'current', time:'08:30' },
+        { name:'验证', status:'pending', time:null }
+      ],
+      currentDetail:'正在同步排产计划到生产管理系统 · 已完成 11/14 订单',
+      expectedResult:'14个订单全部纳入计划，设备利用率87%'
+    },
+    {
+      id:'MSN-20260629-005',
+      title:'聚酯面料Q3合同锁定',
+      type:'采购',
+      agent:'AI采购员',
+      agentIcon:'fa-cart-shopping',
+      agentColor:'emerald',
+      progress:67,
+      currentStep:'执行',
+      steps:[
+        { name:'发现', status:'completed', time:'昨日14:30' },
+        { name:'分析', status:'completed', time:'昨日15:00' },
+        { name:'方案', status:'completed', time:'昨日16:00' },
+        { name:'审批', status:'completed', time:'今日09:00', approver:'李建国' },
+        { name:'执行', status:'current', time:'今日10:00' },
+        { name:'验证', status:'pending', time:null }
+      ],
+      currentDetail:'合同草稿已发送给绍兴盛泰，等待对方确认 · 预计节省¥15,000/月',
+      expectedResult:'锁定Q3价格，避免面料涨价带来的成本风险'
+    },
+    {
+      id:'MSN-20260629-006',
+      title:'本周经营报告生成',
+      type:'经营',
+      agent:'AI经营分析师',
+      agentIcon:'fa-chart-pie',
+      agentColor:'ai',
+      progress:90,
+      currentStep:'验证',
+      steps:[
+        { name:'发现', status:'completed', time:'06:00' },
+        { name:'分析', status:'completed', time:'08:00' },
+        { name:'方案', status:'completed', time:'10:00' },
+        { name:'审批', status:'completed', time:'14:00', approver:'王志远' },
+        { name:'执行', status:'completed', time:'16:00' },
+        { name:'验证', status:'current', time:'18:00前' }
+      ],
+      currentDetail:'PPT报告已生成，正在校验数据准确性 · 预计今日18:00前发布',
+      expectedResult:'完整呈现本周经营情况，识别4项关键归因'
+    }
+  ],
+  // 已完成（已闭环）
+  completed: [
+    {
+      id:'MSN-20260628-001',
+      title:'订单HT-0625-002提前开工',
+      type:'排产',
+      agent:'AI计划员',
+      result:'success',
+      actualResult:'已开工，产能利用率+5.2%',
+      cost:0,
+      duration:'2小时',
+      userFeedback:5,
+      learned:true,
+      lessonId:'LESSON-20260628-001',
+      completedAt:'昨日 14:20'
+    },
+    {
+      id:'MSN-20260628-002',
+      title:'黑色涤纶面料应急采购',
+      type:'采购',
+      agent:'AI采购员',
+      result:'success',
+      actualResult:'挽回延期2天，成本+¥2,850（低于预期10%）',
+      cost:2850,
+      duration:'4小时',
+      userFeedback:5,
+      learned:true,
+      lessonId:'LESSON-20260628-002',
+      completedAt:'昨日 18:30'
+    },
+    {
+      id:'MSN-20260628-003',
+      title:'缝制B组返工率监控',
+      type:'品控',
+      agent:'AI品控员',
+      result:'success',
+      actualResult:'检测到异常并推送根因分析，挽回效率损失',
+      cost:0,
+      duration:'1小时',
+      userFeedback:4,
+      learned:true,
+      lessonId:'LESSON-20260628-003',
+      completedAt:'昨日 10:30'
+    },
+    {
+      id:'MSN-20260628-004',
+      title:'设备张力参数优化',
+      type:'品控',
+      agent:'AI品控员',
+      result:'success',
+      actualResult:'返工率↓22%，零成本',
+      cost:0,
+      duration:'3小时',
+      userFeedback:5,
+      learned:true,
+      lessonId:'LESSON-20260628-004',
+      completedAt:'昨日 11:30'
+    }
+  ]
+};
+
+// DNA 类型数据（Factory Brain 新增类型）
+const customerDNA = [
+  {id:'CDNA-C001', name:'广州优品服饰', category:'客户DNA', pattern:'小批量多频次', orders:28, score:96, color:'bg-rose-500', avatar:'优',
+    preferences:['交期敏感','质量要求中','价格不敏感','款式变化快'],
+    historyInsight:'偏好碎花、连衣裙类，平均订单800件，交期要求≤15天',
+    predictions:[{t:'下单频率', v:'每2周1次'}, {t:'客单价', v:'约¥6.6万'}, {t:'毛利率', v:'34%'}]
+  },
+  {id:'CDNA-C002', name:'深圳潮牌工坊', category:'客户DNA', pattern:'大批量', orders:15, score:88, color:'bg-amber-500', avatar:'潮',
+    preferences:['价格敏感','款式标准化','大批量订单'],
+    historyInsight:'偏好T恤、运动短裤类，平均订单3000件+',
+    predictions:[{t:'下单频率', v:'每月1次'}, {t:'客单价', v:'约¥28万'}, {t:'毛利率', v:'28%'}]
+  },
+  {id:'CDNA-C003', name:'杭州轻氧女装', category:'客户DNA', pattern:'中批量', orders:22, score:92, color:'bg-emerald-500', avatar:'轻',
+    preferences:['质量敏感','款式时尚','快速响应'],
+    historyInsight:'偏好衬衫、针织类，平均订单1000件',
+    predictions:[{t:'下单频率', v:'每10天1次'}, {t:'客单价', v:'约¥13万'}, {t:'毛利率', v:'36%'}]
+  }
+];
+
+const supplierDNA = [
+  {id:'SDNA-S001', name:'绍兴盛泰面料', category:'供应商DNA', type:'面料', score:94, color:'from-blue-500 to-cyan-500',
+    quality:'A · 98.5%', delivery:'B · 85%', price:'中', cooperation:'128单 · ¥286万',
+    risks:['旺季产能饱和','价格敏感'], strengths:['面料质量稳定','长期合作'],
+    predictions:[{t:'下季度价格', v:'预计+3%'}, {t:'交期稳定性', v:'B级'}]
+  },
+  {id:'SDNA-S002', name:'东莞永胜辅料', category:'供应商DNA', type:'辅料', score:96, color:'from-emerald-500 to-teal-500',
+    quality:'A · 99.1%', delivery:'A · 95%', price:'中', cooperation:'86单 · ¥68万',
+    risks:[], strengths:['响应极快','质量稳定'],
+    predictions:[{t:'下季度价格', v:'稳定'}, {t:'交期稳定性', v:'A级'}]
+  },
+  {id:'SDNA-S003', name:'佛山金辉印绣花', category:'供应商DNA', type:'印绣花', score:88, color:'from-amber-500 to-orange-500',
+    quality:'B+ · 96.2%', delivery:'A · 92%', price:'中', cooperation:'64单 · ¥94万',
+    risks:['色差偶发'], strengths:['交期快','价格合理'],
+    predictions:[{t:'下季度价格', v:'+2%'}, {t:'交期稳定性', v:'A级'}]
+  }
+];
+
+const qualityDNA = [
+  {id:'QDNA-Q001', name:'法式茶歇裙品控', category:'质量DNA', defectRate:'2.8%', target:'≤3%', score:96, color:'bg-rose-500',
+    commonDefects:[{n:'V领不对称',p:'12%',p2:'增加定位工序'},{n:'腰围尺寸偏差',p:'8%',p2:'加强首件检验'}],
+    reworkReasons:[{n:'面料缩水',p:'45%'},{n:'缝制张力不均',p:'30%'},{n:'其他',p:'25%'}],
+    trend:'稳定', lastUpdate:'2天前'
+  },
+  {id:'QDNA-Q002', name:'商务衬衫品控', category:'质量DNA', defectRate:'2.2%', target:'≤3%', score:97, color:'bg-emerald-500',
+    commonDefects:[{n:'领角起皱',p:'8%',p2:'使用专用压领机'},{n:'袖口不对称',p:'5%',p2:'模板校准'}],
+    reworkReasons:[{n:'面料色差',p:'40%'},{n:'针距偏差',p:'35%'},{n:'其他',p:'25%'}],
+    trend:'改善中 ↑3%', lastUpdate:'昨日'
+  },
+  {id:'QDNA-Q003', name:'运动T恤品控', category:'质量DNA', defectRate:'1.8%', target:'≤2%', score:98, color:'bg-ai-500',
+    commonDefects:[{n:'印花错位',p:'6%',p2:'定位标校准'},{n:'袖长偏差',p:'4%',p2:'首件三检'}],
+    reworkReasons:[{n:'印花色差',p:'50%'},{n:'布边毛刺',p:'25%'},{n:'其他',p:'25%'}],
+    trend:'稳定', lastUpdate:'3天前'
+  }
+];
+
+const equipmentDNA = [
+  {id:'EDNA-E001', name:'缝制B组设备群', category:'设备DNA', equipment:'兄弟BAS-311H ×8', efficiency:'76%', target:'≥85%', score:78, color:'bg-danger-500',
+    issues:[{n:'张力漂移',p:'35%'},{n:'针距偏差',p:'25%'},{n:'机针老化',p:'20%'},{n:'其他',p:'20%'}],
+    maintenance:['本周三设备保养','张力校准','机针更换'],
+    lastIncident:'昨日张力异常 2次'
+  },
+  {id:'EDNA-E002', name:'裁剪A组设备群', category:'设备DNA', equipment:'拓卡TK-CUT-3 ×2', efficiency:'102%', target:'≥90%', score:96, color:'bg-success-500',
+    issues:[{n:'刀片磨损',p:'15%'},{n:'其他',p:'85%'}],
+    maintenance:['每月例行保养'],
+    lastIncident:'无（近30天）'
+  },
+  {id:'EDNA-E003', name:'包装D组设备群', category:'设备DNA', equipment:'全自动包装线 ×1', efficiency:'96%', target:'≥90%', score:93, color:'bg-success-500',
+    issues:[{n:'封口温度漂移',p:'20%'},{n:'其他',p:'80%'}],
+    maintenance:['每周温度校准'],
+    lastIncident:'7天前封口异常 1次'
+  }
 ];
 
 const alerts = [
-  {id:'ALT-001', level:'danger', levelText:'紧急', title:'订单HT-2026-0615-001预计延期3天', causeChain:[
-    {step:'客户临时提前交期（上周三）', pct:30},
-    {step:'领料量超出计划40%', pct:25},
-    {step:'面料库存快速消耗', pct:20},
-    {step:'采购周期未调整', pct:15},
-    {step:'生产待料2天', pct:10}
-  ], solutions:[
-    {id:1, name:'紧急采购（2天到货）', cost:'+¥2,400', effect:'追回1天', score:75, recommended:false},
-    {id:2, name:'从订单HT-005调剂（零成本）', cost:'¥0', effect:'不影响', score:96, recommended:true},
-    {id:3, name:'外协部分产能', cost:'+¥4,500', effect:'追回2天', score:70, recommended:false},
-    {id:4, name:'与客户协商延期1天', cost:'-满意度5%', effect:'减轻压力', score:60, recommended:false}
-  ]},
-  {id:'ALT-002', level:'warn', levelText:'高', title:'黑色涤纶面料库存低于安全线', causeChain:[
-    {step:'订单HT-001加急领料', pct:50},
-    {step:'本周新增3个订单使用该面料', pct:30},
-    {step:'供应商交期延长至7天', pct:20}
-  ], solutions:[
-    {id:1, name:'紧急采购100米', cost:'+¥2,850', effect:'2天到货', score:92, recommended:true},
-    {id:2, name:'锁定Q3合同', cost:'预付30%', effect:'长期保障', score:85, recommended:false}
-  ]},
-  {id:'ALT-003', level:'warn', levelText:'中', title:'缝制B组返工率7%（正常3%）', causeChain:[
-    {step:'新员工占比40%', pct:40},
-    {step:'面料缩率异常', pct:35},
-    {step:'设备张力未调整', pct:15},
-    {step:'款式复杂度+35%', pct:10}
-  ], solutions:[
-    {id:1, name:'调2名熟练工支援', cost:'+¥800', effect:'返工率↓40%', score:95, recommended:true},
-    {id:2, name:'调整设备张力', cost:'¥0', effect:'返工率↓25%', score:88, recommended:false},
-    {id:3, name:'增加预缩工序', cost:'+¥300', effect:'返工率↓20%', score:82, recommended:false}
-  ]}
+  {id:'ALT-001', level:'danger', levelText:'紧急', title:'订单HT-2026-0615-001预计延期3天', lifecycleStatus:'方案待审批',
+    causeChain:[
+      {step:'客户临时提前交期（上周三）', pct:30},
+      {step:'领料量超出计划40%', pct:25},
+      {step:'面料库存快速消耗', pct:20},
+      {step:'采购周期未调整', pct:15},
+      {step:'生产待料2天', pct:10}
+    ], solutions:[
+      {id:1, name:'紧急采购（2天到货）', cost:'+¥2,400', effect:'追回1天', score:75, recommended:false},
+      {id:2, name:'从订单HT-005调剂（零成本）', cost:'¥0', effect:'不影响', score:96, recommended:true},
+      {id:3, name:'外协部分产能', cost:'+¥4,500', effect:'追回2天', score:70, recommended:false},
+      {id:4, name:'与客户协商延期1天', cost:'-满意度5%', effect:'减轻压力', score:60, recommended:false}
+    ],
+    lifecycle:{
+      discoveredAt:'2026-06-29T08:15:00',
+      analyzedAt:'2026-06-29T08:18:00',
+      solutionGeneratedAt:'2026-06-29T08:22:00',
+      approvedAt:null,
+      executedAt:null,
+      verifiedAt:null,
+      learnedAt:null
+    }
+  },
+  {id:'ALT-002', level:'warn', levelText:'高', title:'黑色涤纶面料库存低于安全线', lifecycleStatus:'方案待审批',
+    causeChain:[
+      {step:'订单HT-001加急领料', pct:50},
+      {step:'本周新增3个订单使用该面料', pct:30},
+      {step:'供应商交期延长至7天', pct:20}
+    ], solutions:[
+      {id:1, name:'紧急采购100米', cost:'+¥2,850', effect:'2天到货', score:92, recommended:true},
+      {id:2, name:'锁定Q3合同', cost:'预付30%', effect:'长期保障', score:85, recommended:false}
+    ],
+    lifecycle:{
+      discoveredAt:'2026-06-29T08:30:00',
+      analyzedAt:'2026-06-29T08:31:00',
+      solutionGeneratedAt:'2026-06-29T08:32:00',
+      approvedAt:null,
+      executedAt:null,
+      verifiedAt:null,
+      learnedAt:null
+    }
+  },
+  {id:'ALT-003', level:'warn', levelText:'中', title:'缝制B组返工率7%（正常3%）', lifecycleStatus:'方案待审批',
+    causeChain:[
+      {step:'新员工占比40%', pct:40},
+      {step:'面料缩率异常', pct:35},
+      {step:'设备张力未调整', pct:15},
+      {step:'款式复杂度+35%', pct:10}
+    ], solutions:[
+      {id:1, name:'调2名熟练工支援', cost:'+¥800', effect:'返工率↓40%', score:95, recommended:true},
+      {id:2, name:'调整设备张力', cost:'¥0', effect:'返工率↓25%', score:88, recommended:false},
+      {id:3, name:'增加预缩工序', cost:'+¥300', effect:'返工率↓20%', score:82, recommended:false}
+    ],
+    lifecycle:{
+      discoveredAt:'2026-06-29T10:00:00',
+      analyzedAt:'2026-06-29T10:05:00',
+      solutionGeneratedAt:'2026-06-29T10:12:00',
+      approvedAt:null,
+      executedAt:null,
+      verifiedAt:null,
+      learnedAt:null
+    }
+  }
+];
+
+// 闭环历史（已闭环预警）
+const closedAlerts = [
+  {id:'ALT-C001', title:'订单HT-0625-002排产冲突', level:'warn', closedAt:'昨日', result:'success', actualEffect:'设备利用率+5.2%', cost:0, learned:'LESSON-20260628-001'},
+  {id:'ALT-C002', title:'聚酯面料涨价预警', level:'warn', closedAt:'昨日', result:'success', actualEffect:'锁定价格月省¥14,800', cost:0, learned:'LESSON-20260628-002'},
+  {id:'ALT-C003', title:'缝制B组设备报警', level:'danger', closedAt:'2天前', result:'success', actualEffect:'2小时修复', cost:0, learned:'LESSON-20260627-001'}
 ];
 
 /* ============== 2. 状态管理 ============== */
@@ -786,11 +1176,11 @@ function aiBadge() { return `<span class="px-1.5 py-0.5 rounded text-[10px] font
 /* ============== 4. 登录与角色 ============== */
 const rolePermissions = {
   admin: {name:'王志远', role:'超级管理员', avatar:'王', color:'ai-gradient', modules:['*']},
-  factory: {name:'李建国', role:'厂长', avatar:'李', color:'bg-blue-500', modules:['home','agents','knowledge','dashboard','orders','production','finance','alerts']},
-  planner: {name:'张明', role:'计划员', avatar:'张', color:'bg-emerald-500', modules:['home','agents','production','inventory','alerts']},
-  sales: {name:'陈丽华', role:'业务员', avatar:'陈', color:'bg-rose-500', modules:['home','agents','orders','alerts']},
-  warehouse: {name:'赵志强', role:'仓管', avatar:'赵', color:'bg-amber-500', modules:['home','agents','inventory','alerts']},
-  cutter: {name:'孙国良', role:'裁剪负责人', avatar:'孙', color:'bg-cyan-500', modules:['home','agents','production','alerts']}
+  factory: {name:'李建国', role:'厂长', avatar:'李', color:'bg-blue-500', modules:['home','mission-center','agents','knowledge','ai-decisions','dashboard','orders','production','finance','alerts']},
+  planner: {name:'张明', role:'计划员', avatar:'张', color:'bg-emerald-500', modules:['home','mission-center','agents','production','inventory','alerts']},
+  sales: {name:'陈丽华', role:'业务员', avatar:'陈', color:'bg-rose-500', modules:['home','mission-center','agents','orders','alerts']},
+  warehouse: {name:'赵志强', role:'仓管', avatar:'赵', color:'bg-amber-500', modules:['home','mission-center','agents','inventory','alerts']},
+  cutter: {name:'孙国良', role:'裁剪负责人', avatar:'孙', color:'bg-cyan-500', modules:['home','mission-center','agents','production','alerts']}
 };
 
 function selectRole(el) {
@@ -905,189 +1295,173 @@ function sendChat() {
 
 function processAIResponse(text) {
   let response = '';
+  // Command Center 统一响应结构
+  const cmdCenter = (analysis, problemCards, recommendation, actions) => {
+    return `
+      <div class="p-3 bg-gradient-to-r from-ai-50 to-brand-50 border-l-4 border-ai-500 rounded-r-lg mb-3">
+        <div class="text-[10px] font-bold text-ai-700 mb-1">📊 分析结果</div>
+        <div class="text-[11px] text-ink-700 leading-relaxed">${analysis}</div>
+      </div>
+      <div class="space-y-2 mb-3">${problemCards}</div>
+      ${recommendation}
+      <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-ink-100">${actions}</div>`;
+  };
+  const recBlock = (name, cost, effect, score, conf) => `
+    <div class="p-3 bg-gradient-to-br from-success-50 to-emerald-50 border-2 border-success-300 rounded-lg">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="fas fa-star text-success-500"></i>
+        <span class="text-[11px] font-bold text-success-800">💡 AI推荐最优方案</span>
+        <span class="text-[10px] px-2 py-0.5 bg-success-500 text-white rounded-full ml-auto">评分 ${score}</span>
+      </div>
+      <div class="text-[12px] font-semibold text-ink-900 mb-1.5">${name}</div>
+      <div class="grid grid-cols-3 gap-2 text-[10px]">
+        <div class="bg-white/70 rounded p-1.5"><div class="text-ink-500">💰 成本</div><div class="font-bold text-ink-900 font-mono">${cost}</div></div>
+        <div class="bg-white/70 rounded p-1.5"><div class="text-ink-500">⚡ 效果</div><div class="font-bold text-ink-900">${effect}</div></div>
+        <div class="bg-white/70 rounded p-1.5"><div class="text-ink-500">🎯 AI置信度</div><div class="font-bold text-success-600 font-mono">${conf}%</div></div>
+      </div>
+    </div>`;
+
   if (text.includes('延期') || text.includes('风险')) {
-    response = `我分析了所有14个在制订单，<span class="text-danger-600 font-semibold">发现3个订单存在延期风险</span>：<br/><br/>
-      <div class="space-y-2 mt-2">
-        <div class="p-2 bg-danger-50 rounded border-l-2 border-danger-500">
-          <div class="font-semibold text-danger-700">🔴 HT-2026-0615-001 · 延期2天</div>
-          <div class="text-[11px] text-ink-600 mt-0.5">根因：面料延迟到货 + 客户临时提前交期 · 置信度88%</div>
+    response = cmdCenter(
+      `我分析了所有14个在制订单，发现<span class="text-danger-600 font-semibold">3个订单存在延期风险</span>，预计总影响 ¥41.4万营收。`,
+      `
+        <div class="p-2.5 bg-danger-50 border-l-2 border-danger-500 rounded">
+          <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-danger-500 text-white rounded font-mono font-bold">高</span><div class="text-[12px] font-semibold text-danger-700">🔴 HT-2026-0615-001 · 延期2天</div></div>
+          <div class="text-[11px] text-ink-600">根因：面料延迟到货 + 客户临时提前交期 · 置信度88%</div>
         </div>
-        <div class="p-2 bg-warn-50 rounded border-l-2 border-warn-500">
-          <div class="font-semibold text-warn-700">🟠 HT-2026-0618-003 · 延期1天</div>
-          <div class="text-[11px] text-ink-600 mt-0.5">根因：缝制B组效率下降 · 置信度76%</div>
+        <div class="p-2.5 bg-warn-50 border-l-2 border-warn-500 rounded">
+          <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-warn-500 text-white rounded font-mono font-bold">中</span><div class="text-[12px] font-semibold text-warn-700">🟠 HT-2026-0618-003 · 延期1天</div></div>
+          <div class="text-[11px] text-ink-600">根因：缝制B组效率下降 · 置信度76%</div>
         </div>
-        <div class="p-2 bg-warn-50 rounded border-l-2 border-warn-500">
-          <div class="font-semibold text-warn-700">🟠 HT-2026-0620-005 · 预计延期</div>
-          <div class="text-[11px] text-ink-600 mt-0.5">根因：外协未回厂 · 置信度72%</div>
-        </div>
-      </div>
-      <div class="mt-3 text-[11px] text-ink-500">💡 建议立即处理 HT-0615-001。是否查看根因分析与解决方案？</div>
-      <div class="flex gap-1.5 mt-2">
-        <button onclick="navigate('alerts')" class="text-[10px] px-2 py-1 ai-gradient text-white rounded">查看方案</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">稍后处理</button>
-      </div>`;
+        <div class="p-2.5 bg-warn-50 border-l-2 border-warn-500 rounded">
+          <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-warn-500 text-white rounded font-mono font-bold">中</span><div class="text-[12px] font-semibold text-warn-700">🟠 HT-2026-0620-005 · 预计延期</div></div>
+          <div class="text-[11px] text-ink-600">根因：外协未回厂 · 置信度72%</div>
+        </div>`,
+      recBlock('从订单HT-005调剂面料（零成本方案）', '¥0', '追回2天延期，不影响HT-005', 96, 96),
+      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>立即执行</button>
+       <button onclick="navigate('mission-center')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>查看所有方案</button>
+       <button onclick="navigate('alerts')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-route mr-1"></i>查看风险中心</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`
+    );
   } else if (text.includes('短缺') || text.includes('库存')) {
-    response = `我预测了未来7天的物料消耗，<span class="text-danger-600 font-semibold">发现2项物料将短缺</span>：<br/><br/>
-      <div class="space-y-2 mt-2">
-        <div class="p-2 bg-danger-50 rounded">
-          <div class="flex items-center justify-between">
-            <div class="font-semibold text-ink-900">黑色涤纶面料</div>
-            <span class="text-[10px] text-danger-600 font-mono">预计周三断货</span>
-          </div>
-          <div class="text-[11px] text-ink-600 mt-0.5">当前120m / 安全200m / 周消耗80m</div>
+    response = cmdCenter(
+      `我预测了未来7天的物料消耗，<span class="text-danger-600 font-semibold">发现2项物料将短缺</span>，影响3个订单。`,
+      `
+        <div class="p-2.5 bg-danger-50 border-l-2 border-danger-500 rounded">
+          <div class="flex items-center justify-between"><div class="text-[12px] font-semibold text-ink-900">黑色涤纶面料</div><span class="text-[10px] text-danger-600 font-mono">预计周三断货</span></div>
+          <div class="text-[11px] text-ink-600 mt-1">当前120m / 安全200m / 周消耗80m · 缺口80m</div>
         </div>
-        <div class="p-2 bg-warn-50 rounded">
-          <div class="flex items-center justify-between">
-            <div class="font-semibold text-ink-900">4#金属拉链</div>
-            <span class="text-[10px] text-warn-600 font-mono">预计周五短缺</span>
-          </div>
-          <div class="text-[11px] text-ink-600 mt-0.5">当前500条 / 安全800条 / 周消耗350条</div>
-        </div>
-      </div>
-      <div class="mt-3 text-[11px] text-ink-500">💡 已为您准备3套解决方案，是否查看？</div>
-      <div class="flex gap-1.5 mt-2">
-        <button onclick="navigate('inventory')" class="text-[10px] px-2 py-1 ai-gradient text-white rounded">查看方案</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded" onclick="addAIMessage('已生成紧急采购单 PUR-20260629-001，关联供应商A，预计明天到货。\\n\\n需要发起审批吗？')">直接生成采购单</button>
-      </div>`;
+        <div class="p-2.5 bg-warn-50 border-l-2 border-warn-500 rounded">
+          <div class="flex items-center justify-between"><div class="text-[12px] font-semibold text-ink-900">4#金属拉链</div><span class="text-[10px] text-warn-600 font-mono">预计周五短缺</span></div>
+          <div class="text-[11px] text-ink-600 mt-1">当前500条 / 安全800条 / 周消耗350条</div>
+        </div>`,
+      recBlock('紧急采购 100m 黑色涤纶面料', '+¥2,850', '2天到货，库存恢复至220m', 92, 92),
+      `<button onclick="quickApprove('MSN-20260629-001')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>立即生成采购单</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改方案</button>
+       <button onclick="navigate('inventory')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>查看库存</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`
+    );
   } else if (text.includes('采购计划') || text.includes('采购')) {
-    response = `已为您生成本周采购计划，覆盖未来7天物料需求：<br/><br/>
-      <div class="mt-2 p-3 bg-ai-50 rounded-lg border border-ai-200">
-        <div class="text-[11px] text-ai-700 font-semibold mb-2">📋 采购计划概览</div>
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div><div class="text-lg font-bold text-ai-600">3</div><div class="text-[10px] text-ink-500">采购单</div></div>
-          <div><div class="text-lg font-bold text-ai-600">¥18,250</div><div class="text-[10px] text-ink-500">总金额</div></div>
-          <div><div class="text-lg font-bold text-ai-600">5天</div><div class="text-[10px] text-ink-500">平均交期</div></div>
+    response = cmdCenter(
+      `已为您生成本周采购计划，覆盖未来7天物料需求。<span class="font-bold">3个采购单</span>，金额 <span class="font-bold text-ai-600">¥18,250</span>。`,
+      `
+        <div class="grid grid-cols-3 gap-2 text-center mb-2">
+          <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">3</div><div class="text-[10px] text-ink-500">采购单</div></div>
+          <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">¥18,250</div><div class="text-[10px] text-ink-500">总金额</div></div>
+          <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">5天</div><div class="text-[10px] text-ink-500">平均交期</div></div>
         </div>
-      </div>
-      <div class="mt-2 space-y-1.5 text-[11px]">
-        <div class="flex items-center justify-between p-1.5 hover:bg-ink-50 rounded">
-          <span>① 黑色涤纶面料 100m</span>
-          <span class="font-mono text-ink-500">¥2,850</span>
-        </div>
-        <div class="flex items-center justify-between p-1.5 hover:bg-ink-50 rounded">
-          <span>② 4#金属拉链 500条</span>
-          <span class="font-mono text-ink-500">¥1,400</span>
-        </div>
-        <div class="flex items-center justify-between p-1.5 hover:bg-ink-50 rounded">
-          <span>③ 印花工艺·碎花 200m</span>
-          <span class="font-mono text-ink-500">¥9,000</span>
-        </div>
-      </div>
-      <div class="flex gap-1.5 mt-3">
-        <button class="text-[10px] px-2 py-1 ai-gradient text-white rounded">✓ 一键生成</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">修改后生成</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">导出</button>
-      </div>`;
+        <div class="space-y-1 text-[11px]">
+          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>① 黑色涤纶面料 100m</span><span class="font-mono text-ink-500">¥2,850</span></div>
+          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>② 4#金属拉链 500条</span><span class="font-mono text-ink-500">¥1,400</span></div>
+          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>③ 印花工艺·碎花 200m</span><span class="font-mono text-ink-500">¥9,000</span></div>
+        </div>`,
+      recBlock('自动生成采购单并发起审批', '¥18,250', '3-5天全部到货', 88, 90),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>一键生成</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-download mr-1"></i>导出</button>`
+    );
   } else if (text.includes('利润') || text.includes('下降')) {
-    response = `已分析本月利润变化。📉 本月毛利率 28.3%（上月 32.1%），<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span><br/><br/>
-      <div class="text-[11px] font-semibold text-ink-700 mt-2">归因分析：</div>
-      <div class="mt-2 space-y-1.5 text-[11px]">
-        <div class="flex items-center justify-between">
-          <span>① 面料成本 ↑5.2%（聚酯上涨+紧急采购）</span>
-          <span class="text-danger-600 font-mono">-2.1%</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>② 外协费用 ↑8%（缝制产能不足）</span>
-          <span class="text-danger-600 font-mono">-1.5%</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>③ 返工成本 ↑12%（新员工培训不足）</span>
-          <span class="text-danger-600 font-mono">-0.8%</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>④ 人工效率 ↓3%（设备保养停机）</span>
-          <span class="text-danger-600 font-mono">-0.4%</span>
-        </div>
-      </div>
-      <div class="mt-3 p-2 bg-success-50 rounded text-[11px]">
-        <div class="font-semibold text-success-700">💡 AI建议：</div>
-        <div class="text-ink-600 mt-1">① 与供应商A重新谈判长期合同（预计节省¥15,000/月）<br/>② 优化排产减少外协（AI已生成优化方案）<br/>③ 加强新员工培训（AI已生成培训计划）</div>
-      </div>
-      <div class="flex gap-1.5 mt-3">
-        <button onclick="navigate('finance')" class="text-[10px] px-2 py-1 ai-gradient text-white rounded">查看详细分析</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">生成PPT报告</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">执行优化方案</button>
-      </div>`;
+    response = cmdCenter(
+      `已分析本月利润变化。📉 本月毛利率 <span class="font-bold">28.3%</span>（上月 32.1%），<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span>，预计影响净利润 <span class="font-bold text-danger-600">-¥18.5万</span>。`,
+      `
+        <div class="space-y-1.5 text-[11px]">
+          <div class="flex items-center justify-between p-1.5 bg-danger-50/50 rounded"><span>① 面料成本 ↑5.2%</span><span class="text-danger-600 font-mono font-bold">-2.1%</span></div>
+          <div class="flex items-center justify-between p-1.5 bg-danger-50/50 rounded"><span>② 外协费用 ↑8%</span><span class="text-danger-600 font-mono font-bold">-1.5%</span></div>
+          <div class="flex items-center justify-between p-1.5 bg-warn-50/50 rounded"><span>③ 返工成本 ↑12%</span><span class="text-danger-600 font-mono font-bold">-0.8%</span></div>
+          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>④ 人工效率 ↓3%</span><span class="text-danger-600 font-mono font-bold">-0.4%</span></div>
+        </div>`,
+      recBlock('执行组合优化方案', '+¥32,000/月', '下月起毛利率恢复至31%+', 90, 88),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>执行优化方案</button>
+       <button onclick="navigate('finance')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-chart-line mr-1"></i>详细分析</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-file-powerpoint mr-1"></i>生成PPT</button>`
+    );
   } else if (text.includes('订单HT-2026-0615-001') || text.includes('根因')) {
-    response = `正在因果分析订单 <span class="font-mono font-semibold">HT-2026-0615-001</span> 的延期根因...<br/><br/>
-      <div class="mt-2 p-3 bg-ink-50 rounded-lg">
-        <div class="text-[11px] font-semibold text-ink-700 mb-2">🔍 因果链分析</div>
-        <div class="text-[11px] space-y-1.5 text-ink-600">
-          <div>① 客户优品服饰上周三临时提前交期（原7/15 → 7/8）</div>
-          <div class="pl-4 text-ink-400">↓</div>
-          <div>② 领料量超出原计划 40%</div>
-          <div class="pl-4 text-ink-400">↓</div>
-          <div>③ 黑色涤纶面料库存快速消耗（从300m降至120m）</div>
-          <div class="pl-4 text-ink-400">↓</div>
-          <div>④ 采购周期未调整（仍按原15天）</div>
-          <div class="pl-4 text-ink-400">↓</div>
-          <div>⑤ 库存低于安全线，生产待料2天</div>
-          <div class="pl-4 text-danger-400 font-semibold">↓</div>
-          <div class="text-danger-600 font-semibold">⑥ 预计延期3天（影响客户满意度）</div>
-        </div>
-      </div>
-      <div class="mt-3 p-2 bg-success-50 rounded text-[11px]">
-        <div class="font-semibold text-success-700">⭐ AI推荐最优解法：方案② - 从订单HT-005调剂（零成本）</div>
-        <div class="text-ink-600 mt-1">预计可追回 2 天延期，不增加成本</div>
-      </div>
-      <div class="flex gap-1.5 mt-3">
-        <button class="text-[10px] px-2 py-1 ai-gradient text-white rounded">✓ 执行方案②</button>
-        <button onclick="navigate('alerts')" class="text-[10px] px-2 py-1 border border-ink-300 rounded">查看所有方案</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">为什么这样建议？</button>
-      </div>`;
+    response = cmdCenter(
+      `正在因果分析订单 <span class="font-mono font-semibold">HT-2026-0615-001</span> 的延期根因。AI识别出6层因果链，找到3个可干预节点。`,
+      `
+        <div class="p-3 bg-ink-50 rounded-lg">
+          <div class="text-[11px] space-y-1 text-ink-600">
+            <div>① 客户优品服饰上周三临时提前交期（原7/15 → 7/8）</div>
+            <div class="pl-4 text-ink-400">↓</div>
+            <div>② 领料量超出原计划 40%</div>
+            <div class="pl-4 text-ink-400">↓</div>
+            <div>③ 黑色涤纶面料库存快速消耗（300m → 120m）</div>
+            <div class="pl-4 text-ink-400">↓</div>
+            <div>④ 采购周期未调整</div>
+            <div class="pl-4 text-ink-400">↓</div>
+            <div>⑤ 库存低于安全线，生产待料2天</div>
+            <div class="pl-4 text-danger-400 font-semibold">↓</div>
+            <div class="text-danger-600 font-semibold">⑥ 预计延期3天</div>
+          </div>
+        </div>`,
+      recBlock('从订单HT-005调剂 200m 面料', '¥0', '追回2天延期，客户满意度影响<5%', 96, 96),
+      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>执行方案②</button>
+       <button onclick="navigate('mission-center')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>所有方案</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-question-circle mr-1"></i>为何这样建议？</button>`
+    );
   } else if (text.includes('创建') || text.includes('优品') || text.includes('300件')) {
-    response = `✅ 我已解析您的输入，正在创建订单...<br/><br/>
-      <div class="mt-2 p-3 bg-ai-50 rounded-lg border border-ai-200">
-        <div class="text-[11px] font-semibold text-ai-700 mb-2">📝 订单解析</div>
-        <div class="text-[11px] space-y-1 text-ink-700">
-          <div>• 客户：<span class="font-semibold">广州优品服饰</span></div>
-          <div>• 产品：黑色T恤 · 300件</div>
-          <div>• 交期：<span class="font-mono">2026-07-20</span>（22天）</div>
-          <div>• 工艺：匹配 DNA-2026-003 运动T恤（98%相似度）</div>
-          <div>• 尺码：S/M/L/XL/XXL = 30/80/110/60/20（基于历史数据）</div>
-        </div>
-      </div>
-      <div class="mt-2 p-3 bg-white rounded-lg border border-ink-200">
-        <div class="text-[11px] font-semibold text-ink-700 mb-2">📦 BOM 物料清单</div>
-        <div class="text-[11px] space-y-1 text-ink-600">
-          <div>• 黑色涤纶面料 165m（库存120m ⚠️ 缺口45m）</div>
-          <div>• 32支精梳棉 领口罗纹 8m（库存充足）</div>
-          <div>• 黑色缝纫线 5卷（库存充足）</div>
-          <div>• 商标吊牌 300套（库存充足）</div>
-        </div>
-      </div>
-      <div class="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-        <div class="p-2 bg-ink-50 rounded">
-          <div class="text-ink-500">预估成本</div>
-          <div class="font-bold text-ink-900">¥8,250</div>
-        </div>
-        <div class="p-2 bg-ink-50 rounded">
-          <div class="text-ink-500">预估利润</div>
-          <div class="font-bold text-success-600">¥4,950 (37.5%)</div>
-        </div>
-      </div>
-      <div class="flex gap-1.5 mt-3">
-        <button class="text-[10px] px-2 py-1 ai-gradient text-white rounded">✓ 确认创建</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">✏️ 修改</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">❌ 取消</button>
-      </div>`;
+    response = cmdCenter(
+      `✅ 已解析您的输入。检测到客户DNA匹配度 96%，工艺DNA匹配度 98%，可全自动创建订单。`,
+      `
+        <div class="space-y-2 text-[11px]">
+          <div class="p-2 bg-ai-50 border border-ai-200 rounded-lg">
+            <div class="text-ai-700 font-semibold mb-1">📝 订单解析</div>
+            <div class="space-y-1 text-ink-700">
+              <div>• 客户：<span class="font-semibold">广州优品服饰</span> (DNA 96)</div>
+              <div>• 产品：黑色T恤 · 300件</div>
+              <div>• 交期：<span class="font-mono">2026-07-20</span>（22天）</div>
+              <div>• 工艺：<span class="text-ai-600 font-semibold">DNA-2026-003 运动T恤</span>（98%）</div>
+              <div>• 尺码：S/M/L/XL/XXL = 30/80/110/60/20</div>
+            </div>
+          </div>
+          <div class="p-2 bg-white border border-ink-200 rounded">
+            <div class="font-semibold text-ink-800 mb-1">📦 BOM清单</div>
+            <div class="space-y-0.5 text-ink-600">
+              <div class="flex justify-between"><span>• 黑色涤纶面料 165m</span><span class="text-danger-600">缺口45m ⚠️</span></div>
+              <div class="flex justify-between"><span>• 32支精梳棉 8m</span><span class="text-success-600">充足</span></div>
+            </div>
+          </div>
+        </div>`,
+      recBlock('自动创建订单 + BOM + 排产 + 采购需求', '+¥8,250', '预估利润¥4,950 (37.5%)', 95, 94),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>确认创建</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">取消</button>`
+    );
   } else if (text.includes('排产') || text.includes('排程')) {
-    response = `已分析所有订单+BOM+产能+物料齐套情况。<br/><br/>
-      <div class="mt-2 p-3 bg-ai-50 rounded-lg border border-ai-200">
-        <div class="text-[11px] font-semibold text-ai-700 mb-2">📅 30天排产方案（已优化）</div>
-        <div class="text-[11px] space-y-1 text-ink-700">
-          <div>• 排产订单：<span class="font-semibold">14个</span>（含3个紧急）</div>
-          <div>• 设备利用率：<span class="font-semibold text-success-600">87.3%</span>（↑12%）</div>
-          <div>• 预计节省工时：<span class="font-semibold text-success-600">142小时</span></div>
-          <div>• 延期风险：<span class="font-semibold text-danger-600">2单</span>（需关注）</div>
-        </div>
-      </div>
-      <div class="mt-2 text-[11px] text-ink-500">💡 模拟验证已通过，是否发布执行？</div>
-      <div class="flex gap-1.5 mt-3">
-        <button class="text-[10px] px-2 py-1 ai-gradient text-white rounded">✓ 发布执行</button>
-        <button onclick="navigate('production')" class="text-[10px] px-2 py-1 border border-ink-300 rounded">查看甘特图</button>
-        <button class="text-[10px] px-2 py-1 border border-ink-300 rounded">调整参数</button>
-      </div>`;
+    response = cmdCenter(
+      `已分析14个订单 + BOM + 产能 + 物料齐套情况。AI生成的30天排产方案已通过模拟验证。`,
+      `
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">排产订单</div><div class="text-lg font-bold text-ink-900">14个（含3个紧急）</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">设备利用率</div><div class="text-lg font-bold text-success-600">87.3% ↑12%</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">预计节省工时</div><div class="text-lg font-bold text-success-600">142小时</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">延期风险</div><div class="text-lg font-bold text-danger-600">2单（已识别）</div></div>
+        </div>`,
+      recBlock('发布执行排产方案', '0', '设备利用率+12%，延期风险已纳入应对', 92, 91),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>发布执行</button>
+       <button onclick="navigate('production')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-chart-gantt mr-1"></i>查看甘特图</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-sliders mr-1"></i>调整参数</button>`
+    );
   } else {
     response = `我理解您的需求："${text}"<br/><br/>
       正在跨模块分析数据...<br/><br/>
@@ -1105,7 +1479,8 @@ function processAIResponse(text) {
 
 /* ============== 7. 页面渲染 ============== */
 const pages = {
-  home: renderHome,
+  home: renderTodayMission,
+  'mission-center': renderMissionCenter,
   agents: renderAgents,
   knowledge: renderKnowledge,
   dashboard: renderDashboard,
@@ -1119,6 +1494,7 @@ const pages = {
   outsourcing: renderOutsourcing,
   distribution: renderDistribution,
   alerts: renderAlerts,
+  'ai-decisions': renderAIDecisions,
   evolution: renderEvolution,
   org: renderOrg
 };
@@ -1129,287 +1505,809 @@ function renderPage(page) {
   else document.getElementById('pageContainer').innerHTML = '<div class="p-8 text-center text-ink-400">页面开发中...</div>';
 }
 
-/* ============== 8. 任务流首页 ============== */
-function renderHome() {
+/* ============== 8. Today Mission（目标驱动的AI-Native首页） ============== */
+function renderTodayMission() {
+  const r = rolePermissions[currentRole];
+  // 进行中任务（来自 pending + executing）
+  const inProgress = missionCenterData.pending.map(m => ({...m, status:'AI处理中'}));
+  const todoItems = missionCenterData.executing.map(m => ({...m, status:'等待人工触发', isPlanned:true}));
+  const completedItems = missionCenterData.completed;
+
+  // 渲染步骤条
+  const renderSteps = (steps, compact=false) => {
+    return `<div class="flex items-center w-full">
+      ${steps.map((s, i) => {
+        const isLast = i === steps.length - 1;
+        const dotClass = s.status === 'completed' ? 'completed' : s.status === 'current' ? 'current' : 'pending';
+        const icon = s.status === 'completed' ? '<i class="fas fa-check text-[10px]"></i>' : s.status === 'current' ? '<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>' : (i+1);
+        const lineClass = s.status === 'completed' ? 'completed' : '';
+        return `
+          <div class="mission-step">
+            <div class="mission-step-dot ${dotClass}">${icon}</div>
+            <div class="flex flex-col">
+              <span class="mission-step-label ${s.status==='current'?'text-ai-700 font-semibold':s.status==='completed'?'text-success-700':'text-ink-500'}">${s.name}</span>
+              ${s.time ? `<span class="mission-step-time">${s.time.slice(0,5)}</span>` : ''}
+            </div>
+          </div>
+          ${!isLast ? `<div class="mission-step-line ${lineClass}"></div>` : ''}
+        `;
+      }).join('')}
+    </div>`;
+  };
+
+  // 渲染置信度圆环
+  const renderConfidence = (conf) => {
+    const color = conf >= 90 ? '#10b981' : conf >= 75 ? '#8b5cf6' : '#f59e0b';
+    return `<div class="confidence-ring" style="background:conic-gradient(${color} ${conf*3.6}deg, #f1f5f9 0deg);">
+      <div class="w-7 h-7 rounded-full bg-white flex items-center justify-center">
+        <span class="text-[10px] font-bold" style="color:${color}">${conf}</span>
+      </div>
+    </div>`;
+  };
+
+  // 单个任务卡（进行中/待审批）
+  const renderActiveCard = (m, isPending=true) => {
+    const prioColor = m.priority === 'P0' ? 'danger' : m.priority === 'P1' ? 'warn' : 'brand';
+    return `
+    <div class="mission-card bg-white rounded-xl border border-ink-200 overflow-hidden">
+      <div class="p-3.5 border-b border-ink-100 bg-gradient-to-r from-${prioColor}-50/40 to-transparent">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-${prioColor}-500 text-white">${m.priority||'P1'}</span>
+            <div class="text-[13px] font-semibold text-ink-900 truncate">${m.title}</div>
+          </div>
+          ${aiBadge()}
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-ink-600">
+          <span class="flex items-center gap-1.5">
+            <i class="fas ${m.agentIcon} text-${m.agentColor}-500 text-[10px]"></i>
+            <span>${m.agent}</span>
+          </span>
+          <span class="text-[10px] text-ink-400 font-mono">${m.id.slice(-9)} · ${m.createdAt}</span>
+        </div>
+      </div>
+
+      <div class="p-3.5">
+        <!-- 6步闭环 -->
+        <div class="mb-3 pb-3 border-b border-dashed border-ink-200">
+          ${renderSteps(m.steps)}
+        </div>
+
+        <!-- 当前内容 -->
+        <div class="mb-3">
+          <div class="flex items-start gap-2 text-[11px] text-ink-700 mb-2">
+            <i class="fas fa-lightbulb text-warn-500 mt-0.5"></i>
+            <span class="leading-relaxed">${m.problem}</span>
+          </div>
+          <div class="p-2 bg-gradient-to-br from-success-50 to-emerald-50 border border-success-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-star text-success-500 text-[10px] mt-0.5"></i>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-semibold text-success-800 mb-0.5">⭐ AI推荐方案</div>
+                <div class="text-[11px] text-ink-800 font-medium">${m.solution.name}</div>
+                <div class="flex items-center gap-3 mt-1 text-[10px] text-ink-600">
+                  <span><i class="fas fa-coins text-warn-500 mr-0.5"></i>${m.solution.cost}</span>
+                  <span><i class="fas fa-bolt text-ai-500 mr-0.5"></i>${m.solution.effect}</span>
+                </div>
+              </div>
+              ${renderConfidence(m.solution.confidence || m.solution.score)}
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex items-center gap-2">
+          <button onclick="quickApprove('${m.id}')" class="quick-approve-btn text-[11px] px-3 py-1.5 rounded-lg font-medium flex items-center gap-1">
+            <i class="fas fa-check-circle text-[10px]"></i> 一键批准
+          </button>
+          <button onclick="viewAlternatives('${m.id}')" class="text-[11px] px-3 py-1.5 border border-ink-300 rounded-lg hover:bg-ink-50 text-ink-700">
+            其它方案(${m.alternativeSolutions?m.alternativeSolutions.length:0})
+          </button>
+          <button onclick="viewMissionDetail('${m.id}')" class="text-[11px] px-3 py-1.5 text-ai-600 hover:text-ai-700 ml-auto">
+            详情 →
+          </button>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // 执行中任务卡（简版）
+  const renderExecutingCard = (m) => {
+    return `
+    <div class="mission-card bg-white rounded-xl border-l-4 border-l-ai-500 border border-ink-200 overflow-hidden exec-card-pulse">
+      <div class="p-3.5">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <div class="w-7 h-7 rounded-lg bg-${m.agentColor}-500 flex items-center justify-center text-white text-[10px] shrink-0">
+              <i class="fas ${m.agentIcon}"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] font-semibold text-ink-900 truncate">${m.title}</div>
+              <div class="text-[10px] text-ink-500">${m.agent} · ${m.id.slice(-9)}</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 bg-ai-100 text-ai-700 rounded-full flex items-center gap-1">
+            <span class="w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
+            ${m.currentStep}中
+          </span>
+        </div>
+        <div class="mb-3">
+          ${renderSteps(m.steps, true)}
+        </div>
+        <div class="text-[11px] text-ink-600 mb-2 leading-relaxed">
+          <i class="fas fa-circle-info text-ai-500 mr-1"></i>${m.currentDetail}
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 bg-ink-100 rounded-full h-1.5 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-ai-500 to-indigo-500 rounded-full" style="width:${m.progress}%"></div>
+          </div>
+          <span class="text-[10px] font-mono font-bold text-ai-700">${m.progress}%</span>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // 已完成任务卡
+  const renderCompletedCard = (m) => {
+    return `
+    <div class="mission-card bg-white rounded-xl border border-success-200 overflow-hidden">
+      <div class="p-3.5 bg-gradient-to-r from-success-50/50 to-transparent">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-start gap-2 flex-1 min-w-0">
+            <div class="w-6 h-6 rounded-full bg-success-500 flex items-center justify-center text-white text-[10px] shrink-0 mt-0.5">
+              <i class="fas fa-check"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] font-semibold text-ink-900 truncate">${m.title}</div>
+              <div class="text-[10px] text-ink-500 mt-0.5">${m.agent} · ${m.completedAt}</div>
+            </div>
+          </div>
+          ${m.learned ? '<span class="text-[10px] px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded">已沉淀</span>' : ''}
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-2">
+          <div class="text-center p-1.5 bg-white rounded border border-ink-100">
+            <div class="text-[9px] text-ink-500">耗时</div>
+            <div class="text-[11px] font-bold text-ink-900 font-mono">${m.duration}</div>
+          </div>
+          <div class="text-center p-1.5 bg-white rounded border border-ink-100">
+            <div class="text-[9px] text-ink-500">成本</div>
+            <div class="text-[11px] font-bold text-ink-900 font-mono">${m.cost===0?'¥0':'¥'+m.cost.toLocaleString()}</div>
+          </div>
+          <div class="text-center p-1.5 bg-white rounded border border-ink-100">
+            <div class="text-[9px] text-ink-500">评分</div>
+            <div class="text-[11px] font-bold text-warn-600 font-mono">${'⭐'.repeat(m.userFeedback)}</div>
+          </div>
+        </div>
+        <div class="mt-2 text-[10px] text-success-700 flex items-start gap-1">
+          <i class="fas fa-trophy mt-0.5"></i>
+          <span>${m.actualResult}</span>
+        </div>
+      </div>
+    </div>`;
+  };
+
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
-      <!-- 欢迎条 -->
+      <!-- 顶部欢迎条 -->
       <div class="ai-card rounded-2xl p-5 border border-ai-200 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 opacity-10" style="background:radial-gradient(circle, #8b5cf6, transparent);"></div>
+        <div class="absolute top-0 right-0 w-72 h-72 opacity-10" style="background:radial-gradient(circle, #8b5cf6, transparent);"></div>
         <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
-            <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
-              早上好，<span class="ai-gradient-text">${rolePermissions[currentRole].name}</span> <span class="text-sm font-normal text-ink-500">厂长</span>
-              <span class="text-sm font-normal text-ink-500 ml-2">🤖 4个AI员工正在工作中</span>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] px-2 py-0.5 bg-ai-500 text-white rounded-full font-medium">🎯 TODAY MISSION</span>
+              <span class="text-[10px] text-ai-600 font-mono">2026/06/29 · 周一</span>
+            </div>
+            <h1 class="text-xl font-bold text-ink-900">
+              早上好，<span class="ai-gradient-text">${r.name}</span>
+              <span class="text-sm font-normal text-ink-500">${r.role}</span>
             </h1>
-            <p class="text-sm text-ink-600 mt-1">今天是 <span class="font-mono">2026年6月29日 周一</span> · 工厂状态：<span class="text-success-600 font-medium">正常运营</span> · 当前AI引擎版本 v2.3.1</p>
+            <p class="text-sm text-ink-600 mt-1">
+              今天有 <span class="font-bold text-danger-600">${inProgress.length}</span> 项AI方案待您审批，
+              <span class="font-bold text-ai-600">${todoItems.length}</span> 项任务等待触发，
+              <span class="font-bold text-success-600">${completedItems.length}</span> 项已闭环 ✓
+            </p>
           </div>
           <div class="flex items-center gap-2">
             <button onclick="openCopilot()" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm font-medium shadow-soft flex items-center gap-2">
               <i class="fas fa-sparkles"></i> AI Copilot
             </button>
-            <button class="px-3 py-2 border border-ink-200 rounded-lg text-sm hover:bg-ink-50 flex items-center gap-2">
-              <i class="fas fa-microphone text-ai-500"></i> 语音指令
+            <button onclick="navigate('mission-center')" class="px-3 py-2 border border-ink-200 rounded-lg text-sm hover:bg-ink-50 flex items-center gap-2">
+              <i class="fas fa-arrows-spin text-ai-500"></i> 执行中心
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 今日优先处理（AI排序） -->
-      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft">
-        <div class="p-4 border-b border-ink-100 flex items-center justify-between">
-          <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
-            🔥 今日优先处理 <span class="text-xs font-normal text-ai-600 bg-ai-50 px-2 py-0.5 rounded-full">AI 已智能排序</span>
-          </h2>
-          <div class="text-xs text-ink-500">共 9 项 · 已处理 0</div>
+      <!-- 三栏式任务看板 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- 左栏：进行中（AI处理中，需人工确认） -->
+        <div class="bg-ink-50/50 rounded-2xl p-3 border border-ink-200 kanban-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-danger-500 flex items-center justify-center text-white">
+                <i class="fas fa-bell-concierge text-xs"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-ink-900">进行中</div>
+                <div class="text-[10px] text-ink-500">AI方案待您审批</div>
+              </div>
+            </div>
+            <span class="bg-danger-500 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">${inProgress.length}</span>
+          </div>
+          <div class="space-y-3">
+            ${inProgress.map(m => renderActiveCard(m, true)).join('')}
+          </div>
         </div>
-        <div class="divide-y divide-ink-100">
+
+        <!-- 中栏：待开始（AI已规划，等待触发） -->
+        <div class="bg-ink-50/50 rounded-2xl p-3 border border-ink-200 kanban-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-ai-500 flex items-center justify-center text-white">
+                <i class="fas fa-arrows-spin text-xs animate-spin"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-ink-900">AI执行中</div>
+                <div class="text-[10px] text-ink-500">已批准 · 自动执行</div>
+              </div>
+            </div>
+            <span class="bg-ai-500 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">${todoItems.length}</span>
+          </div>
+          <div class="space-y-3">
+            ${todoItems.map(m => renderExecutingCard(m)).join('')}
+          </div>
+        </div>
+
+        <!-- 右栏：已完成（已闭环，经验沉淀） -->
+        <div class="bg-ink-50/50 rounded-2xl p-3 border border-ink-200 kanban-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-success-500 flex items-center justify-center text-white">
+                <i class="fas fa-circle-check text-xs"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-ink-900">已完成</div>
+                <div class="text-[10px] text-ink-500">经验已沉淀</div>
+              </div>
+            </div>
+            <span class="bg-success-500 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">${completedItems.length}</span>
+          </div>
+          <div class="space-y-3">
+            ${completedItems.map(m => renderCompletedCard(m)).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- AI 员工快速状态条 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
+            🤖 4个AI数字员工 · 实时目标
+          </h2>
+          <button onclick="navigate('agents')" class="text-xs text-ai-600 hover:text-ai-700">查看Agent Mission Center →</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           ${[
-            {prio:'P0',icon:'fa-triangle-exclamation',color:'danger',title:'3个订单存在延期风险',items:[
-              {name:'HT-2026-0615-001',sub:'延期2天 · 根因：面料延迟到货', aiConf:'88%'},
-              {name:'HT-2026-0618-003',sub:'延期1天 · 根因：缝制B组效率下降', aiConf:'76%'},
-              {name:'HT-2026-0620-005',sub:'预计延期 · 根因：外协未回厂', aiConf:'72%'}
-            ], actions:[['查看详情','navigate(\'alerts\')'],['一键处理','processAlert()']]},
-            {prio:'P1',icon:'fa-boxes-stacked',color:'warn',title:'2个物料库存不足',items:[
-              {name:'黑色涤纶面料',sub:'当前库存120m / 安全库存200m', aiConf:'预测缺口80m'},
-              {name:'4#金属拉链',sub:'当前库存500条 / 安全库存800条', aiConf:'预测缺口300条'}
-            ], actions:[['查看详情','navigate(\'inventory\')'],['创建采购单','createPurchase()']]},
-            {prio:'P1',icon:'fa-clock',color:'warn',title:'1个采购单即将逾期',items:[
-              {name:'PUR-20260620-002 绍兴盛泰面料',sub:'预计明天到货 · 跟单中', aiConf:'准时率B 85%'}
-            ], actions:[['查看详情','navigate(\'approval\')'],['催货','showToast(\'已发送催货通知给供应商\',\'success\')']]},
-            {prio:'P1',icon:'fa-chart-pie',color:'ai',title:'AI发现利润异常',items:[
-              {name:'本月毛利率 28.3%',sub:'上月 32.1% · 下降 3.8 个百分点', aiConf:'AI归因分析完成'}
-            ], actions:[['查看详情','navigate(\'finance\')'],['分析','navigate(\'finance\')']]},
-            {prio:'P2',icon:'fa-check-to-slot',color:'brand',title:'4个审批待确认',items:[
-              {name:'领料申请×2 / 采购单×1 / 外协单×1',sub:'合计金额 ¥18,600', aiConf:'AI预审通过3项'}
-            ], actions:[['查看详情','navigate(\'approval\')'],['批量处理','navigate(\'approval\')']]}
-          ].map((group, idx) => `
-            <div class="p-4 hover:bg-ink-50/50 transition-colors">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-lg bg-${group.color}-50 flex items-center justify-center text-${group.color}-600 shrink-0">
-                  <i class="fas ${group.icon}"></i>
+            {name:'AI 计划员',goal:'准时率>95%',current:'94.2%',progress:94,color:'blue',icon:'fa-calendar-check'},
+            {name:'AI 采购员',goal:'库存健康度>85%',current:'87%',progress:87,color:'emerald',icon:'fa-cart-shopping'},
+            {name:'AI 品控员',goal:'返工率<3.5%',current:'3.2%',progress:91,color:'rose',icon:'fa-shield-halved'},
+            {name:'AI 经营分析师',goal:'归因准确率>90%',current:'91%',progress:91,color:'ai',icon:'fa-chart-pie'}
+          ].map(a => `
+            <div class="p-3 border border-ink-200 rounded-lg hover:border-${a.color}-300 cursor-pointer" onclick="navigate('agents')">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-7 h-7 rounded-lg bg-${a.color}-500 flex items-center justify-center text-white text-[10px]">
+                  <i class="fas ${a.icon}"></i>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1.5">
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${group.prio==='P0'?'bg-danger-500 text-white':group.prio==='P1'?'bg-warn-500 text-white':'bg-brand-500 text-white'}">${group.prio}</span>
-                    <span class="text-sm font-semibold text-ink-900">${group.title}</span>
-                    ${aiBadge()}
-                  </div>
-                  <div class="space-y-1">
-                    ${group.items.map(it => `
-                      <div class="flex items-center justify-between text-xs pl-1">
-                        <div class="flex items-center gap-2 min-w-0">
-                          <span class="w-1 h-1 bg-ink-300 rounded-full"></span>
-                          <span class="font-mono text-ink-800 font-medium">${it.name}</span>
-                          <span class="text-ink-500">· ${it.sub}</span>
-                        </div>
-                        <span class="text-[10px] text-ai-600 font-mono shrink-0 ml-2">AI ${it.aiConf}</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-                <div class="flex flex-col gap-1.5 shrink-0">
-                  ${group.actions.map(([txt,fn]) => `<button onclick="${fn}" class="text-[11px] px-2.5 py-1 ${txt.includes('查看')||txt.includes('分析')?'border border-ink-300 hover:bg-ink-50':'ai-gradient text-white shadow-soft'} rounded whitespace-nowrap">${txt}</button>`).join('')}
-                </div>
+                <div class="text-[11px] font-semibold text-ink-900">${a.name}</div>
+              </div>
+              <div class="text-[10px] text-ink-500 mb-0.5">🎯 ${a.goal}</div>
+              <div class="text-[11px] font-bold text-${a.color}-700 font-mono mb-1">当前 ${a.current}</div>
+              <div class="bg-ink-100 rounded-full h-1 overflow-hidden">
+                <div class="h-full bg-${a.color}-500" style="width:${a.progress}%"></div>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
+    </div>
+  `;
 
-      <!-- AI 员工状态 + 数据快照 -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <!-- AI 员工状态 -->
-        <div class="lg:col-span-2 bg-white rounded-2xl border border-ink-200 shadow-soft p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
-              🤖 4个AI数字员工 <span class="text-xs font-normal text-ink-500">实时工作状态</span>
-            </h2>
-            <button onclick="navigate('agents')" class="text-xs text-ai-600 hover:text-ai-700">查看工作台 →</button>
+  // 注入快捷操作函数
+  window.quickApprove = (id) => {
+    const m = missionCenterData.pending.find(x => x.id === id);
+    if (m) {
+      m.steps[3].status = 'completed';
+      m.steps[3].time = new Date().toTimeString().slice(0,5);
+      m.steps[3].approver = rolePermissions[currentRole].name;
+      m.steps[4].status = 'current';
+      m.progress = 80;
+      showToast(`✅ 已批准「${m.title}」，AI 正在执行`, 'success', 4000);
+      setTimeout(() => renderTodayMission(), 800);
+    }
+  };
+
+  window.viewAlternatives = (id) => {
+    const m = missionCenterData.pending.find(x => x.id === id);
+    if (!m) return;
+    const altHtml = m.alternativeSolutions.map((a, i) => `
+      <div class="p-2.5 border border-ink-200 rounded-lg mb-2">
+        <div class="flex items-center justify-between mb-1">
+          <div class="text-xs font-medium text-ink-800">方案${i+2}: ${a.name}</div>
+          <span class="text-[10px] font-mono text-ink-500">评分 ${a.score}</span>
+        </div>
+        <div class="flex items-center gap-3 text-[10px] text-ink-600">
+          <span>💰 ${a.cost}</span>
+          <span>⚡ ${a.effect}</span>
+        </div>
+      </div>
+    `).join('');
+    showModal('📋 备选方案 · ' + m.title,
+      `<div class="space-y-3 text-xs">
+        <div class="text-ink-700">${m.problem}</div>
+        ${altHtml}
+        <div class="text-[10px] text-ink-500 pt-2 border-t border-ink-100">
+          💡 AI推荐理由：综合考虑成本、效果、风险三个维度
+        </div>
+      </div>`,
+      `<button onclick="this.closest('.fixed').remove()" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm">选择备选方案</button>
+       <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">取消</button>`
+    );
+  };
+
+  window.viewMissionDetail = (id) => {
+    navigate('mission-center');
+  };
+}
+
+/* ============== 8.5. AI 执行中心（Mission Center）============== */
+function renderMissionCenter() {
+  let currentTab = 'pending';
+
+  const renderSteps = (steps) => {
+    return `<div class="flex items-center w-full">
+      ${steps.map((s, i) => {
+        const isLast = i === steps.length - 1;
+        const dotClass = s.status === 'completed' ? 'completed' : s.status === 'current' ? 'current' : 'pending';
+        const icon = s.status === 'completed' ? '<i class="fas fa-check text-[10px]"></i>' : s.status === 'current' ? '<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>' : (i+1);
+        const lineClass = s.status === 'completed' ? 'completed' : '';
+        return `
+          <div class="mission-step">
+            <div class="mission-step-dot ${dotClass}">${icon}</div>
+            <div class="flex flex-col">
+              <span class="mission-step-label ${s.status==='current'?'text-ai-700 font-semibold':s.status==='completed'?'text-success-700':'text-ink-500'}">${s.name}</span>
+              ${s.time ? `<span class="mission-step-time">${s.time.slice(0,5)}</span>` : ''}
+            </div>
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            ${[
-              {name:'AI 计划员',task:'优化未来30天排产',result:'已生成3个调整建议待确认',stat:'工作中',statColor:'success',acc:'89%',icon:'fa-calendar-check',ai:true},
-              {name:'AI 采购员',task:'监控物料库存 + 价格趋势',result:'聚酯面料涨价3.2%',stat:'待命 · 2项',statColor:'warn',acc:'¥8.6k',icon:'fa-cart-shopping',ai:false},
-              {name:'AI 品控员',task:'分析质量数据',result:'缝制B组返工率异常',stat:'告警 · 2项',statColor:'danger',acc:'94%',icon:'fa-shield-halved',ai:false},
-              {name:'AI 经营分析师',task:'生成本周经营报告',result:'归因完成',stat:'工作中',statColor:'success',acc:'91%',icon:'fa-chart-pie',ai:true}
-            ].map(a => `
-              <div class="ai-card rounded-xl p-3 card-hover cursor-pointer" onclick="showAgentDetail('${a.name.includes('计划')?'planner':a.name.includes('采购')?'buyer':a.name.includes('品控')?'qc':'analyst'}')">
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="w-8 h-8 rounded-lg ${a.statColor==='danger'?'bg-danger-500':'ai-gradient'} flex items-center justify-center text-white text-xs"><i class="fas ${a.icon}"></i></div>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-xs font-semibold text-ink-900">${a.name}</div>
-                    <div class="text-[10px] text-${a.statColor}-600 flex items-center gap-1">
-                      ${a.ai ? '<span class="w-1.5 h-1.5 bg-'+a.statColor+'-500 rounded-full animate-pulse"></span>' : '<i class="fas fa-circle-exclamation text-[8px]"></i>'}
-                      ${a.stat}
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-ink-400">${a.acc}</div>
-                </div>
-                <div class="text-[11px] text-ink-600 leading-relaxed">${a.task}</div>
-                <div class="text-[10px] text-ai-600 mt-1 font-medium">${a.result}</div>
-              </div>
-            `).join('')}
+          ${!isLast ? `<div class="mission-step-line ${lineClass}"></div>` : ''}
+        `;
+      }).join('')}
+    </div>`;
+  };
+
+  const renderPendingCard = (m) => {
+    const prioColor = m.priority === 'P0' ? 'danger' : m.priority === 'P1' ? 'warn' : 'brand';
+    return `
+    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden">
+      <!-- 顶部：6步闭环 -->
+      <div class="p-4 bg-gradient-to-r from-${prioColor}-50/30 to-ai-50/30 border-b border-ink-100">
+        ${renderSteps(m.steps)}
+      </div>
+
+      <!-- 中部：任务信息 -->
+      <div class="p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-${prioColor}-500 text-white">${m.priority}</span>
+              <span class="text-[10px] px-2 py-0.5 bg-ink-100 text-ink-700 rounded">${m.type}</span>
+              <span class="text-[10px] text-ink-500">触发：${m.trigger}</span>
+            </div>
+            <h3 class="text-base font-bold text-ink-900">${m.title}</h3>
+          </div>
+          <div class="text-right ml-3 shrink-0">
+            <div class="text-[10px] text-ink-500">任务ID</div>
+            <div class="text-[10px] font-mono text-ink-700">${m.id}</div>
+            <div class="text-[10px] text-ink-500 mt-1">${m.createdAt}</div>
           </div>
         </div>
 
-        <!-- 今日数据快照 -->
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-ink-900">📊 今日数据快照</h2>
-            <span class="text-[10px] text-ai-600">实时</span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <!-- 问题描述 -->
+          <div>
+            <div class="text-xs font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+              <i class="fas fa-triangle-exclamation text-warn-500"></i> 问题描述
+            </div>
+            <div class="p-3 bg-warn-50 border border-warn-200 rounded-lg text-[11px] text-ink-700 leading-relaxed">
+              ${m.problem}
+            </div>
           </div>
-          <div class="space-y-3">
-            <div>
-              <div class="text-[10px] text-ink-500 mb-1.5">订单状态</div>
-              <div class="grid grid-cols-4 gap-1.5 text-center text-[11px]">
-                <div class="bg-brand-50 rounded p-1.5"><div class="font-bold text-brand-700">14</div><div class="text-ink-500 text-[9px]">进行</div></div>
-                <div class="bg-danger-50 rounded p-1.5"><div class="font-bold text-danger-700">3</div><div class="text-ink-500 text-[9px]">延期</div></div>
-                <div class="bg-success-50 rounded p-1.5"><div class="font-bold text-success-700">2</div><div class="text-ink-500 text-[9px]">出货</div></div>
-                <div class="bg-warn-50 rounded p-1.5"><div class="font-bold text-warn-700">8</div><div class="text-ink-500 text-[9px]">物料</div></div>
+          <!-- 根因分析 -->
+          <div>
+            <div class="text-xs font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+              <i class="fas fa-magnifying-glass-chart text-ai-500"></i> 根因分析
+            </div>
+            <div class="p-3 bg-ai-50 border border-ai-200 rounded-lg text-[11px] text-ink-700 leading-relaxed">
+              ${m.rootCause}
+            </div>
+          </div>
+        </div>
+
+        <!-- AI推荐方案（高亮） -->
+        <div class="p-4 bg-gradient-to-br from-success-50 to-emerald-50 border-2 border-success-300 rounded-xl mb-3">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-star text-success-500"></i>
+              <span class="text-xs font-bold text-success-800">💡 AI推荐最优方案</span>
+              <span class="text-[10px] px-2 py-0.5 bg-success-500 text-white rounded-full">评分 ${m.solution.score}</span>
+            </div>
+            <div class="confidence-ring" style="background:conic-gradient(#10b981 ${m.solution.confidence*3.6}deg, #f1f5f9 0deg);">
+              <div class="w-7 h-7 rounded-full bg-white flex items-center justify-center">
+                <span class="text-[10px] font-bold text-success-600">${m.solution.confidence}</span>
               </div>
+            </div>
+          </div>
+          <div class="text-sm font-semibold text-ink-900 mb-2">${m.solution.name}</div>
+          <div class="grid grid-cols-3 gap-3 text-[11px] mb-3">
+            <div class="p-2 bg-white/70 rounded">
+              <div class="text-ink-500 text-[10px]">💰 成本</div>
+              <div class="font-bold text-ink-900 font-mono">${m.solution.cost}</div>
+            </div>
+            <div class="p-2 bg-white/70 rounded">
+              <div class="text-ink-500 text-[10px]">⚡ 预期效果</div>
+              <div class="font-bold text-ink-900">${m.solution.effect}</div>
+            </div>
+            <div class="p-2 bg-white/70 rounded">
+              <div class="text-ink-500 text-[10px]">🎯 综合评分</div>
+              <div class="font-bold text-success-600 font-mono">${m.solution.score}/100</div>
+            </div>
+          </div>
+          <div class="text-[11px] text-ink-700">
+            <i class="fas fa-flag-checkered text-success-500 mr-1"></i>预期结果：${m.expectedResult}
+          </div>
+        </div>
+
+        <!-- 备选方案 -->
+        <details class="mb-3">
+          <summary class="text-[11px] text-ink-600 cursor-pointer hover:text-ai-600">查看其他 ${m.alternativeSolutions.length} 个备选方案</summary>
+          <div class="mt-2 space-y-2">
+            ${m.alternativeSolutions.map((a, i) => `
+              <div class="p-2.5 border border-ink-200 rounded-lg">
+                <div class="flex items-center justify-between mb-1">
+                  <div class="text-[11px] font-medium text-ink-800">备选方案 ${i+1}：${a.name}</div>
+                  <span class="text-[10px] font-mono text-ink-500">评分 ${a.score}</span>
+                </div>
+                <div class="flex items-center gap-3 text-[10px] text-ink-600">
+                  <span>💰 ${a.cost}</span>
+                  <span>⚡ ${a.effect}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </details>
+
+        <!-- 操作按钮 -->
+        <div class="flex items-center gap-2 pt-3 border-t border-ink-100">
+          <button onclick="missionApprove('${m.id}')" class="quick-approve-btn text-[11px] px-4 py-2 rounded-lg font-medium flex items-center gap-1.5">
+            <i class="fas fa-check-circle"></i> 一键批准并执行
+          </button>
+          <button onclick="missionModify('${m.id}')" class="text-[11px] px-4 py-2 border border-ink-300 rounded-lg hover:bg-ink-50 text-ink-700">
+            <i class="fas fa-pen mr-1"></i>修改方案
+          </button>
+          <button onclick="missionReject('${m.id}')" class="text-[11px] px-4 py-2 border border-danger-300 text-danger-700 rounded-lg hover:bg-danger-50">
+            <i class="fas fa-xmark mr-1"></i>驳回
+          </button>
+          <div class="ml-auto text-[10px] text-ink-500">
+            智能路由：<span class="text-ai-600 font-medium">厂长 → ${rolePermissions[currentRole].name}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const renderExecutingCard = (m) => {
+    return `
+    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden exec-card-pulse">
+      <div class="p-4 bg-gradient-to-r from-ai-50/40 to-transparent border-b border-ink-100">
+        ${renderSteps(m.steps)}
+      </div>
+      <div class="p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-${m.agentColor}-500 flex items-center justify-center text-white">
+              <i class="fas ${m.agentIcon} text-lg"></i>
             </div>
             <div>
-              <div class="text-[10px] text-ink-500 mb-1.5">产能（件/日）</div>
-              <div class="space-y-1.5">
-                ${[
-                  {n:'裁剪',v:1200,max:1300,c:'success'},
-                  {n:'缝制',v:900,max:1100,c:'warn'},
-                  {n:'后整',v:700,max:800,c:'success'},
-                  {n:'包装',v:500,max:600,c:'warn'}
-                ].map(p => `
-                  <div class="flex items-center gap-2">
-                    <span class="text-[10px] text-ink-600 w-8">${p.n}</span>
-                    <div class="flex-1 bg-ink-100 rounded-full h-2 overflow-hidden">
-                      <div class="h-full bg-${p.c}-500 rounded-full" style="width:${p.v/p.max*100}%"></div>
-                    </div>
-                    <span class="text-[10px] font-mono text-ink-600 w-12 text-right">${p.v}</span>
-                  </div>
-                `).join('')}
-              </div>
+              <h3 class="text-base font-bold text-ink-900">${m.title}</h3>
+              <div class="text-[11px] text-ink-500 mt-0.5">${m.agent} · 任务ID ${m.id.slice(-9)}</div>
             </div>
-            <div class="p-2 bg-ai-50 border border-ai-200 rounded-lg">
-              <div class="text-[10px] text-ai-700 font-medium flex items-center gap-1 mb-0.5">
-                <i class="fas fa-sparkles text-[8px]"></i> AI建议
-              </div>
-              <div class="text-[11px] text-ink-700">包装D组效率76%，建议从缝制C调2人支援</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-ink-500">总进度</div>
+            <div class="text-2xl font-bold ai-gradient-text font-mono">${m.progress}%</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-ai-50 border border-ai-200 rounded-lg mb-3">
+          <div class="text-[10px] text-ai-700 font-semibold mb-1 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
+            当前：${m.currentStep}
+          </div>
+          <div class="text-[11px] text-ink-700 leading-relaxed">${m.currentDetail}</div>
+        </div>
+
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-[10px] text-ink-500 w-12">进度</span>
+          <div class="flex-1 bg-ink-100 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-ai-500 to-indigo-500 rounded-full transition-all" style="width:${m.progress}%"></div>
+          </div>
+          <span class="text-[11px] font-bold text-ai-700 font-mono">${m.progress}%</span>
+        </div>
+
+        <div class="text-[11px] text-ink-600 mb-3">
+          <i class="fas fa-flag-checkered text-success-500 mr-1"></i>预期结果：${m.expectedResult}
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="showToast('已暂停当前任务','warn')" class="text-[11px] px-3 py-1.5 border border-ink-300 rounded-lg hover:bg-ink-50">
+            <i class="fas fa-pause mr-1"></i>暂停
+          </button>
+          <button onclick="showToast('已查看实时日志','info')" class="text-[11px] px-3 py-1.5 border border-ink-300 rounded-lg hover:bg-ink-50">
+            <i class="fas fa-list-ul mr-1"></i>实时日志
+          </button>
+          <button class="text-[11px] px-3 py-1.5 text-ai-600 hover:text-ai-700 ml-auto">
+            查看完整进度 →
+          </button>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const renderCompletedCard = (m) => {
+    return `
+    <div class="mission-card bg-white rounded-2xl border border-success-200 overflow-hidden">
+      <div class="p-4 bg-gradient-to-r from-success-50 to-emerald-50 border-b border-success-200">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-success-500 flex items-center justify-center text-white">
+              <i class="fas fa-check text-lg"></i>
             </div>
+            <div>
+              <h3 class="text-base font-bold text-ink-900">${m.title}</h3>
+              <div class="text-[11px] text-ink-500 mt-0.5">${m.agent} · ${m.completedAt}</div>
+            </div>
+          </div>
+          ${m.learned ? `<span class="text-[10px] px-2 py-1 bg-ai-500 text-white rounded-full flex items-center gap-1">
+            <i class="fas fa-graduation-cap"></i>已沉淀经验
+          </span>` : ''}
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-4 gap-2 mb-3">
+          <div class="text-center p-2 bg-success-50 rounded-lg">
+            <div class="text-[10px] text-ink-500">耗时</div>
+            <div class="text-sm font-bold text-ink-900 font-mono">${m.duration}</div>
+          </div>
+          <div class="text-center p-2 bg-success-50 rounded-lg">
+            <div class="text-[10px] text-ink-500">实际成本</div>
+            <div class="text-sm font-bold text-ink-900 font-mono">${m.cost===0?'¥0':'¥'+m.cost.toLocaleString()}</div>
+          </div>
+          <div class="text-center p-2 bg-success-50 rounded-lg">
+            <div class="text-[10px] text-ink-500">用户评分</div>
+            <div class="text-sm font-bold text-warn-600 font-mono">${'⭐'.repeat(m.userFeedback)}</div>
+          </div>
+          <div class="text-center p-2 bg-success-50 rounded-lg">
+            <div class="text-[10px] text-ink-500">任务类型</div>
+            <div class="text-sm font-bold text-ink-900">${m.type}</div>
+          </div>
+        </div>
+        <div class="p-3 bg-white border border-success-200 rounded-lg mb-2">
+          <div class="text-[10px] text-success-700 font-semibold mb-1 flex items-center gap-1">
+            <i class="fas fa-trophy"></i> 实际效果
+          </div>
+          <div class="text-[11px] text-ink-700 leading-relaxed">${m.actualResult}</div>
+        </div>
+        ${m.learned ? `
+        <div class="p-2 bg-ai-50 border border-ai-200 rounded flex items-center gap-2 text-[10px]">
+          <i class="fas fa-brain text-ai-500"></i>
+          <span class="text-ink-700">经验已沉淀至 Factory Brain</span>
+          <span class="font-mono text-ai-600 ml-auto">${m.lessonId}</span>
+        </div>` : ''}
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('pageContainer').innerHTML = `
+    <div class="space-y-5 animate-fade-in">
+      <!-- 顶部 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-ai-500 to-indigo-500 text-white rounded-full font-medium">🚀 MISSION CENTER</span>
+          </div>
+          <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
+            <i class="fas fa-arrows-spin text-ai-500"></i> AI 执行中心
+          </h1>
+          <p class="text-xs text-ink-500 mt-1">从「发现问题」到「经验沉淀」的完整闭环 · 每个任务6步可追溯</p>
+        </div>
+        <div class="flex items-center gap-3 text-[11px]">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-warn-500 rounded-full"></span>
+            <span>待审批 ${missionCenterData.pending.length}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-ai-500 rounded-full animate-pulse"></span>
+            <span>执行中 ${missionCenterData.executing.length}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-success-500 rounded-full"></span>
+            <span>已完成 ${missionCenterData.completed.length}</span>
           </div>
         </div>
       </div>
 
-      <!-- AI生成的智能分析 + 工艺DNA推荐 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-4">
-          <h2 class="text-base font-bold text-ink-900 mb-3 flex items-center gap-2">
-            🧠 AI经营洞察
-            <span class="text-xs font-normal text-ink-500">今日 06:00 自动生成</span>
-          </h2>
-          <div class="space-y-3">
-            <div class="p-3 bg-gradient-to-br from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
-              <div class="text-xs font-semibold text-ai-700 mb-1">📈 本周产能风险评估</div>
-              <div class="text-[11px] text-ink-700 leading-relaxed">预计产能利用率 87%，下周缝制B组有 2 天设备保养，建议提前外协 2000 件。</div>
-            </div>
-            <div class="p-3 bg-gradient-to-br from-success-50 to-emerald-50 border border-success-200 rounded-lg">
-              <div class="text-xs font-semibold text-success-700 mb-1">💰 成本优化机会</div>
-              <div class="text-[11px] text-ink-700 leading-relaxed">检测到聚酯面料价格底部，建议锁定 Q3 长期合同，预估节省 ¥15,000/月。</div>
-            </div>
-            <div class="p-3 bg-gradient-to-br from-warn-50 to-amber-50 border border-warn-200 rounded-lg">
-              <div class="text-xs font-semibold text-warn-700 mb-1">⚠️ 质量预警</div>
-              <div class="text-[11px] text-ink-700 leading-relaxed">新员工培训不足，缝制B组返工率上升 4%，已生成整改方案。</div>
-            </div>
+      <!-- Tab 切换 -->
+      <div class="bg-white rounded-xl border border-ink-200 shadow-soft">
+        <div class="flex border-b border-ink-100 overflow-x-auto">
+          <div class="mission-tab active" data-tab="pending" onclick="switchMissionTab('pending')">
+            <i class="fas fa-bell-concierge mr-1"></i>待确认 (${missionCenterData.pending.length})
+          </div>
+          <div class="mission-tab" data-tab="executing" onclick="switchMissionTab('executing')">
+            <i class="fas fa-arrows-spin mr-1"></i>执行中 (${missionCenterData.executing.length})
+          </div>
+          <div class="mission-tab" data-tab="completed" onclick="switchMissionTab('completed')">
+            <i class="fas fa-circle-check mr-1"></i>已完成 (${missionCenterData.completed.length})
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
-              🧬 工艺DNA推荐 <span class="text-xs font-normal text-ink-500">AI匹配</span>
-            </h2>
-            <button onclick="navigate('knowledge')" class="text-xs text-ai-600 hover:text-ai-700">查看全部 →</button>
-          </div>
-          <div class="space-y-2">
-            ${dnaList.slice(0,3).map(d => `
-              <div class="p-3 border border-ink-200 rounded-lg hover:border-ai-300 cursor-pointer" onclick="showDNADetail('${d.id}')">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg ai-gradient flex items-center justify-center text-white text-[10px]">${d.category}</div>
-                    <div>
-                      <div class="text-xs font-semibold text-ink-900">${d.name}</div>
-                      <div class="text-[10px] text-ink-500">${d.id} · ${d.orders}单历史 · 成功率${d.successRate}%</div>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-base font-bold text-ai-600 font-mono">${d.score}</div>
-                    <div class="text-[9px] text-ink-500">综合评分</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2 text-[10px] text-ink-600">
-                  <span>${d.processPath.join(' → ')}</span>
-                  <span class="ml-auto text-success-600 font-mono">成本 ¥${d.cost}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
+        <!-- Tab内容区 -->
+        <div id="missionTabContent" class="p-4">
+          ${missionCenterData.pending.map(m => renderPendingCard(m)).join('')}
         </div>
+      </div>
+
+      <!-- 闭环统计 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${[
+          {n:'本月闭环',v:'128',i:'fa-arrows-rotate',c:'ai',sub:'任务'},
+          {n:'闭环成功率',v:'94%',i:'fa-check-circle',c:'success',sub:'最后30天'},
+          {n:'平均闭环时长',v:'3.2小时',i:'fa-clock',c:'brand',sub:'AI自动'},
+          {n:'经验沉淀',v:'45条',i:'fa-brain',c:'ai',sub:'本月新增'}
+        ].map(k => `
+          <div class="bg-white rounded-xl border border-ink-200 p-3 card-hover">
+            <i class="fas ${k.i} text-${k.c}-500 text-sm mb-1.5"></i>
+            <div class="text-xl font-bold text-ink-900 font-mono">${k.v}</div>
+            <div class="text-[10px] text-ink-500">${k.n}</div>
+            <div class="text-[9px] text-ink-400">${k.sub}</div>
+          </div>
+        `).join('')}
       </div>
     </div>
   `;
-  // 添加快捷操作函数
-  window.processAlert = () => { navigate('alerts'); showToast('已加载3个延期订单的处理方案', 'ai'); };
-  window.createPurchase = () => { showToast('AI已生成紧急采购单 PUR-20260629-001', 'success'); };
-  setTimeout(() => {}, 100);
+
+  // Tab切换函数
+  window.switchMissionTab = (tab) => {
+    document.querySelectorAll('.mission-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.mission-tab[data-tab="${tab}"]`).classList.add('active');
+    const content = document.getElementById('missionTabContent');
+    if (tab === 'pending') {
+      content.innerHTML = missionCenterData.pending.map(m => renderPendingCard(m)).join('');
+    } else if (tab === 'executing') {
+      content.innerHTML = missionCenterData.executing.map(m => renderExecutingCard(m)).join('');
+    } else {
+      content.innerHTML = missionCenterData.completed.map(m => renderCompletedCard(m)).join('');
+    }
+  };
+
+  // 任务操作函数
+  window.missionApprove = (id) => {
+    const m = missionCenterData.pending.find(x => x.id === id);
+    if (m) {
+      // 移到执行中
+      m.steps[3].status = 'completed';
+      m.steps[3].time = new Date().toTimeString().slice(0,5);
+      m.steps[3].approver = rolePermissions[currentRole].name;
+      m.steps[4].status = 'current';
+      m.progress = 80;
+      m.currentStep = '执行';
+      m.currentDetail = 'AI 正在自动执行方案...';
+      missionCenterData.executing.push(m);
+      missionCenterData.pending = missionCenterData.pending.filter(x => x.id !== id);
+      showToast(`✅ 已批准「${m.title}」，AI 正在执行`, 'success', 4000);
+      setTimeout(() => renderMissionCenter(), 800);
+    }
+  };
+  window.missionModify = (id) => {
+    const m = missionCenterData.pending.find(x => x.id === id);
+    showToast('已打开方案编辑器', 'ai');
+  };
+  window.missionReject = (id) => {
+    const m = missionCenterData.pending.find(x => x.id === id);
+    if (m) {
+      missionCenterData.pending = missionCenterData.pending.filter(x => x.id !== id);
+      showToast(`已驳回「${m.title}」`, 'warn');
+      setTimeout(() => renderMissionCenter(), 600);
+    }
+  };
 }
 
-/* ============== 9. 数字员工工作台 ============== */
+/* ============== 9. Agent Mission Center（数字员工工作台 升级版）============== */
 function renderAgents() {
   const agents = [
-    {id:'planner', name:'AI 计划员', icon:'fa-calendar-check', dept:'生产排程部', color:'from-blue-500 to-cyan-500', acc:89,
-      task:'优化未来30天排产', status:'工作中',statusColor:'success',
-      achievement:'已生成排产方案，预计节省工时12%（142小时）',
+    {id:'planner', name:'AI 计划员', icon:'fa-calendar-check', dept:'生产排程部', color:'from-blue-500 to-cyan-500', acc:89, trend:'+2%',
+      monthlyGoal:'确保订单准时率 > 95%（当前94.2%）',
+      currentTasks:14, executing:'30天排产方案发布', execProgress:83,
       pending:3, pendingItems:[
         '调整缝制B组保养期间的产能分配',
         '订单HT-0625-002提前到本周五开工',
         '外协2000件给佛山金辉'
       ],
-      kpi:[{n:'排产建议采纳率',v:'92%'},{n:'交期预测准确率',v:'89%'},{n:'产能利用率提升',v:'+12%'},{n:'本周节省工时',v:'142h'}],
+      contributions:[
+        {label:'追回延期', value:'8次', icon:'fa-clock'},
+        {label:'节省工时', value:'142h', icon:'fa-hourglass-half'},
+        {label:'产能利用率提升', value:'+12%', icon:'fa-gauge-high'},
+        {label:'方案采纳率', value:'92%', icon:'fa-thumbs-up'}
+      ],
+      accuracyTrend:[78,80,82,83,85,86,87,87,88,89,90,92],
+      kpi:[{n:'排产建议采纳率',v:'92%'},{n:'交期预测准确率',v:'89%'},{n:'产能利用率',v:'87%'},{n:'本月节省工时',v:'142h'}],
       history:[
         {time:'08:30',action:'生成30天排产方案',result:'采纳'},
         {time:'14:20',action:'检测到B组保养冲突',result:'自动调整'},
         {time:'16:45',action:'外协方案生成',result:'待确认'}
       ]},
-    {id:'buyer', name:'AI 采购员', icon:'fa-cart-shopping', dept:'采购部', color:'from-emerald-500 to-teal-500', acc:91,
-      task:'监控物料库存 + 价格趋势', status:'待命', statusColor:'warn',
-      achievement:'发现聚酯面料价格上涨3.2%，建议锁定Q3合同',
+    {id:'buyer', name:'AI 采购员', icon:'fa-cart-shopping', dept:'采购部', color:'from-emerald-500 to-teal-500', acc:91, trend:'+3%',
+      monthlyGoal:'库存健康度 > 85%（当前87%）',
+      currentTasks:6, executing:'聚酯面料Q3合同锁定', execProgress:67,
       pending:2, pendingItems:[
         '锁定聚酯面料Q3合同（预估节省¥15,000）',
         '黑色涤纶面料紧急采购（已生成订单）'
       ],
+      contributions:[
+        {label:'本月节省', value:'¥8.6k', icon:'fa-piggy-bank'},
+        {label:'紧急采购', value:'3次', icon:'fa-bolt'},
+        {label:'价格预测准确', value:'88%', icon:'fa-arrow-trend-up'},
+        {label:'库存周转', value:'18天', icon:'fa-arrows-rotate'}
+      ],
+      accuracyTrend:[75,76,78,80,82,83,84,85,86,86,87,88],
       kpi:[{n:'采购成本节省',v:'¥8.6k/月'},{n:'库存周转天数',v:'18天'},{n:'供应商准时率',v:'94%'},{n:'价格预测准确率',v:'88%'}],
       history:[
         {time:'09:15',action:'监控到聚酯面料涨价',result:'已预警'},
         {time:'11:30',action:'生成紧急采购单PUR-001',result:'已审批'},
         {time:'15:00',action:'评估Q3合同方案',result:'待确认'}
       ]},
-    {id:'qc', name:'AI 品控员', icon:'fa-shield-halved', dept:'品控部', color:'from-rose-500 to-pink-500', acc:94,
-      task:'实时质量数据监控', status:'告警处理中', statusColor:'danger',
-      achievement:'缝制B组返工率从3%升至7%，已生成根因分析',
+    {id:'qc', name:'AI 品控员', icon:'fa-shield-halved', dept:'品控部', color:'from-rose-500 to-pink-500', acc:94, trend:'+1%',
+      monthlyGoal:'返工率 < 3.5%（当前3.2% ✓）',
+      currentTasks:9, executing:'B组返工率整改', execProgress:50,
       pending:2, pendingItems:[
         'B组返工率异常整改（4项措施待执行）',
         '新批次面料预缩工序优化'
       ],
+      contributions:[
+        {label:'拦截质量问题', value:'15次', icon:'fa-shield'},
+        {label:'一次合格率', value:'97.8%', icon:'fa-check-double'},
+        {label:'返工率', value:'3.2%', icon:'fa-rotate-left'},
+        {label:'检测准确率', value:'99.2%', icon:'fa-bullseye'}
+      ],
+      accuracyTrend:[85,86,88,89,90,91,92,92,93,93,93,94],
       kpi:[{n:'一次合格率',v:'97.8%'},{n:'返工率',v:'3.2%'},{n:'客户投诉',v:'0.3%'},{n:'检测准确率',v:'99.2%'}],
       history:[
         {time:'10:00',action:'检测到B组返工率异常',result:'已分析'},
         {time:'10:30',action:'生成根因分析报告',result:'已推送'},
         {time:'13:20',action:'整改方案已制定',result:'执行中'}
       ]},
-    {id:'analyst', name:'AI 经营分析师', icon:'fa-chart-pie', dept:'经营分析部', color:'from-ai-500 to-indigo-500', acc:91,
-      task:'生成本周经营报告', status:'工作中', statusColor:'success',
-      achievement:'本月毛利率归因完成（面料成本↑5.2% + 外协费用↑8%）',
+    {id:'analyst', name:'AI 经营分析师', icon:'fa-chart-pie', dept:'经营分析部', color:'from-ai-500 to-indigo-500', acc:91, trend:'+4%',
+      monthlyGoal:'归因准确率 > 90%（当前91% ✓）',
+      currentTasks:5, executing:'本周经营报告生成', execProgress:90,
       pending:1, pendingItems:[
         '生成PPT周报（今日18:00前完成）'
       ],
+      contributions:[
+        {label:'报告生成', value:'48份', icon:'fa-file-powerpoint'},
+        {label:'趋势预测准确', value:'88%', icon:'fa-chart-line'},
+        {label:'决策建议', value:'23条', icon:'fa-lightbulb'},
+        {label:'节省成本', value:'¥32k', icon:'fa-sack-dollar'}
+      ],
+      accuracyTrend:[80,82,84,85,87,88,89,89,90,90,91,91],
       kpi:[{n:'报告生成数',v:'48份'},{n:'归因准确率',v:'91%'},{n:'趋势预测准确',v:'88%'},{n:'客户满意度',v:'96%'}],
       history:[
         {time:'06:00',action:'自动生成日报',result:'已发布'},
@@ -1417,102 +2315,159 @@ function renderAgents() {
         {time:'17:00',action:'周报PPT生成中',result:'进行中'}
       ]}
   ];
+
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
-      <div class="flex items-center justify-between">
+      <!-- 顶部 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
-            <i class="fas fa-robot text-ai-500"></i> 数字员工工作台
-          </h1>
-          <p class="text-xs text-ink-500 mt-1">4个AI数字员工 · 7×24小时工作 · 历史准确率 89-94%</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-ai-500 to-indigo-500 text-white rounded-full font-medium">🤖 AGENT MISSION CENTER</span>
+          </div>
+          <h1 class="text-xl font-bold text-ink-900">数字员工 · Agent Mission Center</h1>
+          <p class="text-xs text-ink-500 mt-1">每个AI员工都有明确的<span class="text-ai-600 font-medium">业务目标</span> · 7×24小时为业务创造价值</p>
         </div>
         <div class="flex items-center gap-2">
           <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-xs hover:bg-ink-50 flex items-center gap-1.5">
-            <i class="fas fa-cog"></i> AI参数配置
+            <i class="fas fa-cog"></i> Agent 配置
           </button>
           <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-soft">
-            <i class="fas fa-plus"></i> 新增AI员工
+            <i class="fas fa-plus"></i> 新增 AI 员工
           </button>
         </div>
       </div>
 
-      <!-- 4个AI员工详细卡片 -->
+      <!-- 4个 Agent Mission Cards -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        ${agents.map(a => `
+        ${agents.map(a => {
+          // 准确率趋势 sparkline
+          const trendMax = Math.max(...a.accuracyTrend);
+          const trendMin = Math.min(...a.accuracyTrend);
+          const points = a.accuracyTrend.map((v, i) => {
+            const x = (i / (a.accuracyTrend.length - 1)) * 100;
+            const y = 100 - ((v - trendMin) / (trendMax - trendMin || 1)) * 100;
+            return `${x},${y}`;
+          }).join(' ');
+          return `
           <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden card-hover">
-            <div class="bg-gradient-to-r ${a.color} p-4 text-white">
-              <div class="flex items-center justify-between">
+            <!-- 头部 -->
+            <div class="bg-gradient-to-r ${a.color} p-4 text-white relative overflow-hidden">
+              <div class="absolute top-0 right-0 w-32 h-32 opacity-10" style="background:radial-gradient(circle, white, transparent);"></div>
+              <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-3">
                   <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl">
                     <i class="fas ${a.icon}"></i>
                   </div>
                   <div>
                     <div class="text-base font-bold">${a.name}</div>
-                    <div class="text-[11px] text-white/80">${a.dept} · 准确率 ${a.acc}%</div>
+                    <div class="text-[11px] text-white/80">${a.dept}</div>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 rounded-full text-[11px]">
-                  <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                  ${a.status}
+                <div class="text-right">
+                  <div class="text-[10px] text-white/70">当前准确率</div>
+                  <div class="text-xl font-bold font-mono">${a.acc}%</div>
+                  <div class="text-[10px] text-success-200">↑ ${a.trend} 本周</div>
                 </div>
               </div>
             </div>
+
             <div class="p-4 space-y-3">
-              <div>
-                <div class="text-[10px] text-ink-500 mb-1">当前任务</div>
-                <div class="text-xs font-medium text-ink-800">${a.task}</div>
-              </div>
-              <div class="p-2.5 bg-gradient-to-br from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
-                <div class="text-[10px] text-ai-700 font-semibold mb-0.5 flex items-center gap-1">
-                  <i class="fas fa-sparkles text-[8px]"></i> 最新成果
+              <!-- 🎯 本月目标 -->
+              <div class="p-2.5 bg-gradient-to-r from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
+                <div class="flex items-center gap-1.5 mb-1">
+                  <span class="text-[10px] font-bold text-ai-700">🎯 本月目标</span>
                 </div>
-                <div class="text-[11px] text-ink-700">${a.achievement}</div>
+                <div class="text-[12px] font-medium text-ink-900">${a.monthlyGoal}</div>
               </div>
+
+              <!-- 📋 当前负责 + 🔄 正在执行 -->
+              <div class="grid grid-cols-2 gap-2">
+                <div class="p-2 bg-ink-50 rounded-lg">
+                  <div class="text-[10px] text-ink-500 mb-1 flex items-center gap-1">
+                    <i class="fas fa-clipboard-list text-brand-500"></i> 当前负责
+                  </div>
+                  <div class="text-sm font-bold text-ink-900 font-mono">${a.currentTasks}<span class="text-[10px] text-ink-500"> 个任务</span></div>
+                </div>
+                <div class="p-2 bg-ink-50 rounded-lg">
+                  <div class="text-[10px] text-ink-500 mb-1 flex items-center gap-1">
+                    <i class="fas fa-arrows-spin text-ai-500"></i> 等待确认
+                  </div>
+                  <div class="text-sm font-bold text-warn-700 font-mono">${a.pending}<span class="text-[10px] text-ink-500"> 项</span></div>
+                </div>
+              </div>
+
+              <!-- 🔄 正在执行 -->
+              <div class="p-2.5 bg-white border border-ai-200 rounded-lg">
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[10px] text-ai-700 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
+                    🔄 正在执行
+                  </span>
+                  <span class="text-[10px] font-bold text-ai-700 font-mono">${a.execProgress}%</span>
+                </div>
+                <div class="text-[11px] text-ink-800 mb-1.5">${a.executing}</div>
+                <div class="bg-ink-100 rounded-full h-1.5 overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-ai-500 to-indigo-500" style="width:${a.execProgress}%"></div>
+                </div>
+              </div>
+
+              <!-- ⏳ 等待确认事项 -->
               ${a.pending > 0 ? `
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <div class="text-[10px] text-ink-500">待确认事项 · ${a.pending}项</div>
-                    <button class="text-[10px] text-ai-600">全部采纳</button>
-                  </div>
-                  <div class="space-y-1">
-                    ${a.pendingItems.map((it, i) => `
-                      <div class="flex items-center gap-2 p-1.5 bg-ink-50 rounded text-[11px] hover:bg-ai-50 cursor-pointer">
-                        <span class="w-1.5 h-1.5 bg-warn-500 rounded-full shrink-0"></span>
-                        <span class="flex-1 text-ink-700">${it}</span>
-                        <button class="text-[10px] text-ai-600 hover:underline shrink-0">采纳</button>
-                      </div>
-                    `).join('')}
-                  </div>
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="text-[10px] text-warn-700 font-semibold">⏳ 等待确认 · ${a.pending}项</div>
+                  <button class="text-[10px] text-ai-600 hover:underline">批量采纳</button>
                 </div>
-              ` : ''}
-              <div class="grid grid-cols-4 gap-1.5">
-                ${a.kpi.map(k => `
-                  <div class="text-center p-1.5 bg-ink-50 rounded">
-                    <div class="text-xs font-bold text-ink-900 font-mono">${k.v}</div>
-                    <div class="text-[9px] text-ink-500 mt-0.5">${k.n}</div>
-                  </div>
-                `).join('')}
-              </div>
-              <details class="text-[11px]">
-                <summary class="cursor-pointer text-ai-600 hover:text-ai-700">查看今日工作记录 →</summary>
-                <div class="mt-2 space-y-1">
-                  ${a.history.map(h => `
-                    <div class="flex items-center gap-2 text-[10px] py-1 border-b border-ink-100">
-                      <span class="font-mono text-ink-500 w-12">${h.time}</span>
-                      <span class="flex-1 text-ink-700">${h.action}</span>
-                      <span class="text-${h.result.includes('已')||h.result.includes('采纳')?'success':'warn'}-600 text-[10px]">${h.result}</span>
+                <div class="space-y-1">
+                  ${a.pendingItems.slice(0,2).map((it, i) => `
+                    <div class="flex items-center gap-2 p-1.5 bg-warn-50/40 rounded text-[11px]">
+                      <span class="w-1.5 h-1.5 bg-warn-500 rounded-full shrink-0"></span>
+                      <span class="flex-1 text-ink-700 truncate">${it}</span>
+                      <button onclick="showToast('已采纳','success')" class="text-[10px] text-success-600 hover:underline shrink-0">采纳</button>
                     </div>
                   `).join('')}
                 </div>
-              </details>
+              </div>` : ''}
+
+              <!-- 🏆 本月贡献 -->
+              <div>
+                <div class="text-[10px] text-warn-700 font-semibold mb-1.5">🏆 本月贡献</div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  ${a.contributions.map(c => `
+                    <div class="text-center p-1.5 bg-gradient-to-br from-warn-50 to-amber-50 rounded border border-warn-100">
+                      <i class="fas ${c.icon} text-warn-500 text-[10px] mb-0.5"></i>
+                      <div class="text-[11px] font-bold text-ink-900 font-mono">${c.value}</div>
+                      <div class="text-[8px] text-ink-500 leading-tight">${c.label}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- 📈 准确率趋势 (sparkline) -->
+              <div class="p-2.5 bg-gradient-to-r from-emerald-50 to-success-50 border border-success-200 rounded-lg">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[10px] text-success-700 font-semibold">📈 准确率趋势（12周）</span>
+                  <span class="text-[10px] text-success-700 font-mono font-bold">${a.accuracyTrend[a.accuracyTrend.length-1]}%</span>
+                </div>
+                <svg viewBox="0 0 100 40" class="w-full h-8" preserveAspectRatio="none">
+                  <polyline fill="none" stroke="#10b981" stroke-width="1.5" points="${points}" />
+                  <polyline fill="url(#successGrad-${a.id})" stroke="none" points="${points} 100,100 0,100" />
+                  <defs>
+                    <linearGradient id="successGrad-${a.id}" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+                      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
 
       <!-- AI协作流程图 -->
       <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-        <h2 class="text-base font-bold text-ink-900 mb-4">🔄 AI员工协作流程</h2>
+        <h2 class="text-base font-bold text-ink-900 mb-4">🔄 AI 员工协作链路</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           ${[
             {n:'AI计划员',d:'生成排产',i:'fa-calendar-check',c:'blue'},
@@ -1536,15 +2491,241 @@ function renderAgents() {
         <div class="mt-4 p-3 bg-ink-50 rounded-lg text-[11px] text-ink-600 leading-relaxed">
           <i class="fas fa-info-circle text-ai-500 mr-1"></i>
           <span class="font-semibold text-ink-800">协作机制：</span>
-          当计划员调整排产时，自动触发采购员重新计算物料需求，品控员同步质量监控，分析师评估对经营指标的影响。最终形成完整的"感知-分析-决策-执行"闭环。
+          当计划员调整排产时，自动触发采购员重新计算物料需求，品控员同步质量监控，分析师评估对经营指标的影响。最终形成完整的"感知-分析-决策-执行-验证-学习"闭环。
         </div>
       </div>
     </div>
   `;
 }
 
-/* ============== 10. 企业知识库 ============== */
-function renderKnowledge() {
+/* ============== 10. AI 决策中心（AIDecisions）============== */
+function renderAIDecisions() {
+  // 顶部统计
+  const stats = [
+    {n:'本月决策数', v:'128', d:'+18%', c:'brand', i:'fa-brain'},
+    {n:'采纳率', v:'94%', d:'+3%', c:'success', i:'fa-thumbs-up'},
+    {n:'有效率', v:'88%', d:'+5%', c:'ai', i:'fa-bullseye'},
+    {n:'节省成本', v:'¥48k', d:'+12%', c:'warn', i:'fa-piggy-bank'}
+  ];
+
+  // 按Agent分组
+  const agentGroups = {};
+  aiDecisions.forEach(d => {
+    const agent = d.agent.replace('Agent','');
+    if (!agentGroups[agent]) agentGroups[agent] = [];
+    agentGroups[agent].push(d);
+  });
+
+  document.getElementById('pageContainer').innerHTML = `
+    <div class="space-y-5 animate-fade-in">
+      <!-- 顶部 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-ai-500 to-indigo-500 text-white rounded-full font-medium">🎯 AI DECISIONS</span>
+            <span class="text-[10px] text-ink-500 font-mono">决策记录 · 效果追踪 · 归因分析</span>
+          </div>
+          <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
+            <i class="fas fa-bullseye text-ai-500"></i> AI 决策中心
+          </h1>
+          <p class="text-xs text-ink-500 mt-1">每一次AI决策都可追溯、可评估、可学习</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <select class="px-3 py-1.5 border border-ink-200 rounded-lg">
+            <option>本月</option><option>上月</option><option>近30天</option><option>本季度</option>
+          </select>
+          <button class="px-3 py-1.5 border border-ink-200 rounded-lg hover:bg-ink-50">
+            <i class="fas fa-download mr-1"></i>导出报告
+          </button>
+        </div>
+      </div>
+
+      <!-- 顶部统计卡片 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${stats.map(s => `
+          <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <div class="w-9 h-9 rounded-lg bg-${s.c}-50 text-${s.c}-600 flex items-center justify-center">
+                <i class="fas ${s.i}"></i>
+              </div>
+              <span class="text-[10px] text-${s.c}-600 font-medium">${s.d}</span>
+            </div>
+            <div class="text-2xl font-bold text-ink-900 font-mono">${s.v}</div>
+            <div class="text-[10px] text-ink-500 mt-0.5">${s.n}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- 准确率趋势 + Agent效果对比 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+          <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            📈 各Agent准确率趋势
+            <span class="text-[10px] font-normal text-ink-500">近12周</span>
+          </h3>
+          <canvas id="aiAccuracyTrendChart" height="180"></canvas>
+        </div>
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+          <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            🏆 Agent 采纳率 vs 有效率
+            <span class="text-[10px] font-normal text-ink-500">本月</span>
+          </h3>
+          <canvas id="agentAdoptChart" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- 决策记录列表 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+        <div class="p-4 border-b border-ink-100 flex items-center justify-between">
+          <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
+            📋 决策记录
+            <span class="text-xs font-normal text-ai-600 bg-ai-50 px-2 py-0.5 rounded-full">实时追踪</span>
+          </h2>
+          <div class="flex items-center gap-2 text-[11px]">
+            <button class="px-2 py-1 bg-ai-500 text-white rounded">全部 ${aiDecisions.length}</button>
+            <button class="px-2 py-1 border border-ink-200 rounded hover:bg-ink-50">已采纳</button>
+            <button class="px-2 py-1 border border-ink-200 rounded hover:bg-ink-50">待确认</button>
+            <button class="px-2 py-1 border border-ink-200 rounded hover:bg-ink-50">无效</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-ink-50 text-xs text-ink-600">
+              <tr>
+                <th class="text-left py-2.5 px-3 font-medium">决策ID</th>
+                <th class="text-left py-2.5 px-3 font-medium">时间</th>
+                <th class="text-left py-2.5 px-3 font-medium">Agent</th>
+                <th class="text-left py-2.5 px-3 font-medium">决策内容</th>
+                <th class="text-left py-2.5 px-3 font-medium">预期 vs 实际</th>
+                <th class="text-left py-2.5 px-3 font-medium">用户操作</th>
+                <th class="text-left py-2.5 px-3 font-medium">评分</th>
+                <th class="text-left py-2.5 px-3 font-medium">有效性</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-100">
+              ${aiDecisions.map(d => `
+                <tr class="hover:bg-ink-50/50">
+                  <td class="py-3 px-3">
+                    <span class="font-mono text-[10px] text-ink-600">${d.id}</span>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-[11px] text-ink-700">${d.time}</td>
+                  <td class="py-3 px-3">
+                    <span class="px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded text-[10px] font-medium">${d.agent}</span>
+                  </td>
+                  <td class="py-3 px-3 max-w-xs">
+                    <div class="text-[11px] text-ink-800 leading-relaxed">${d.suggestion}</div>
+                  </td>
+                  <td class="py-3 px-3 max-w-[200px]">
+                    <div class="text-[10px] text-ink-500">预期：${d.expectedEffect||'-'}</div>
+                    <div class="text-[10px] text-ink-700 font-medium">实际：${d.actualEffect||'-'}</div>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded ${d.userAction==='采纳'?'bg-success-50 text-success-700':d.userAction==='待确认'?'bg-warn-50 text-warn-700':'bg-ink-100 text-ink-700'}">${d.userAction}</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    ${d.feedback ? `<span class="text-warn-500 text-xs">${'⭐'.repeat(d.feedback)}</span>` : '<span class="text-[10px] text-ink-400">-</span>'}
+                  </td>
+                  <td class="py-3 px-3">
+                    ${d.effective === true ? '<span class="text-[10px] px-1.5 py-0.5 bg-success-50 text-success-700 rounded">✓ 有效</span>' :
+                      d.effective === false ? '<span class="text-[10px] px-1.5 py-0.5 bg-danger-50 text-danger-700 rounded">✗ 偏差</span>' :
+                      '<span class="text-[10px] px-1.5 py-0.5 bg-ink-100 text-ink-700 rounded">进行中</span>'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 准确率提升归因 -->
+      <div class="bg-gradient-to-br from-ai-50 via-brand-50 to-cyan-50 rounded-2xl border border-ai-200 p-5">
+        <h2 class="text-base font-bold text-ink-900 mb-3 flex items-center gap-2">
+          🧬 AI 准确率提升归因
+          <span class="text-[10px] font-normal text-ai-600 bg-white px-2 py-0.5 rounded">本周 +3%</span>
+        </h2>
+        <div class="text-[11px] text-ink-600 mb-3">
+          本周AI整体准确率从 <span class="font-mono font-semibold">86%</span> 提升至 <span class="font-mono font-semibold text-success-600">89%</span>。主要改进点：
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          ${[
+            {icon:'fa-cog', title:'学习了新设备参数', desc:'缝制B组张力参数优化', contribution:'+1.2%', agent:'AI 品控员'},
+            {icon:'fa-cloud-rain', title:'纳入天气因素', desc:'雨天排期自动调整', contribution:'+0.8%', agent:'AI 计划员'},
+            {icon:'fa-chart-line', title:'接入期货数据', desc:'面料价格预测更准', contribution:'+1.0%', agent:'AI 采购员'}
+          ].map(d => `
+            <div class="bg-white rounded-xl p-3 border border-ink-200">
+              <div class="flex items-start gap-2 mb-2">
+                <div class="w-9 h-9 rounded-lg bg-ai-500 text-white flex items-center justify-center shrink-0">
+                  <i class="fas ${d.icon}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-semibold text-ink-900">${d.title}</div>
+                  <div class="text-[10px] text-ink-500 mt-0.5">${d.desc}</div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] text-ink-500">${d.agent}</span>
+                <span class="text-sm font-bold text-success-600 font-mono">${d.contribution}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 失败案例学习 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+        <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+          📚 本月学习案例
+          <span class="text-[10px] font-normal text-ink-500">从失败中改进</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${[
+            {title:'外协30%缝制产能', fail:'实际仅+9%（预期+12%）', lesson:'需考虑外协厂实际响应延迟', fix:'外协方案加入"缓冲期"参数'},
+            {title:'缝制B组返工率预测', fail:'返工率↓22%（预期↓25%）', lesson:'新员工培训效果需要更长周期显现', fix:'缩短评估窗口到3天'}
+          ].map(f => `
+            <div class="p-3 border border-warn-200 bg-warn-50/30 rounded-lg">
+              <div class="text-[10px] font-semibold text-warn-700 mb-1">⚠️ ${f.title}</div>
+              <div class="text-[11px] text-ink-700 mb-1"><span class="text-ink-500">偏差：</span>${f.fail}</div>
+              <div class="text-[11px] text-ink-700 mb-1"><span class="text-ink-500">原因：</span>${f.lesson}</div>
+              <div class="text-[11px] text-success-700"><span class="text-ink-500">改进：</span><i class="fas fa-check-circle text-success-500 mr-0.5"></i>${f.fix}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    if (typeof Chart === 'undefined') return;
+
+    if (document.getElementById('aiAccuracyTrendChart')) {
+      charts.aiAccTrend = new Chart(document.getElementById('aiAccuracyTrendChart'), {
+        type:'line', data:{
+          labels:['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'],
+          datasets:[
+            {label:'排产Agent',data:[78,80,82,83,85,86,87,87,88,89,90,92],borderColor:'#3b82f6',tension:0.3},
+            {label:'采购Agent',data:[75,76,78,80,82,83,84,85,86,86,87,88],borderColor:'#10b981',tension:0.3},
+            {label:'品控Agent',data:[85,86,88,89,90,91,92,92,93,93,93,94],borderColor:'#f43f5e',tension:0.3},
+            {label:'经营Agent',data:[80,82,84,85,87,88,89,89,90,90,91,91],borderColor:'#8b5cf6',tension:0.3}
+          ]
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{min:70,max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
+      });
+    }
+
+    if (document.getElementById('agentAdoptChart')) {
+      charts.agentAdopt = new Chart(document.getElementById('agentAdoptChart'), {
+        type:'bar', data:{
+          labels:['排产','采购','品控','经营'],
+          datasets:[
+            {label:'采纳率%',data:[92,88,95,91],backgroundColor:'#8b5cf6'},
+            {label:'有效率%',data:[88,92,90,89],backgroundColor:'#10b981'}
+          ]
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
+      });
+    }
+  }, 100);
+}
+// 兼容：包裹旧renderKnowledge的孤立函数体（已被下方renderKnowledgeFactoryBrain覆盖）
+function _legacyRenderKnowledge() {
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
       <div class="flex items-center justify-between">
@@ -1714,7 +2895,444 @@ function renderKnowledge() {
   `;
 }
 
-/* ============== 11. 数据看板 ============== */
+/* ============== 11. Factory Brain（知识库升级版）============== */
+function renderKnowledge() {
+  // 工艺DNA卡
+  // 工艺DNA卡
+  const renderProcessDNA = () => dnaList.map(d => `
+    <div class="border border-ink-200 rounded-xl p-4 hover:border-ai-300 hover:shadow-soft cursor-pointer card-hover" onclick="showDNADetail('${d.id}')">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl ai-gradient flex items-center justify-center text-white">
+            <i class="fas fa-shirt"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-ink-900">${d.name}</div>
+            <div class="text-[10px] text-ink-500 font-mono">${d.id}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-bold ai-gradient-text font-mono">${d.score}</div>
+          <div class="text-[9px] text-ink-500">综合评分</div>
+        </div>
+      </div>
+      <div class="space-y-2 text-[11px]">
+        <div>
+          <div class="text-ink-500 mb-0.5">工艺路径</div>
+          <div class="flex flex-wrap gap-1">
+            ${d.processPath.map(p => `<span class="px-1.5 py-0.5 bg-brand-50 text-brand-700 rounded text-[10px]">${p}</span>`).join(' → ')}
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-ink-50 rounded p-1.5">
+            <div class="text-[9px] text-ink-500">用料率</div>
+            <div class="text-xs font-bold text-success-600 font-mono">${d.optimalCutRate}</div>
+          </div>
+          <div class="bg-ink-50 rounded p-1.5">
+            <div class="text-[9px] text-ink-500">成本基准</div>
+            <div class="text-xs font-bold text-ink-900 font-mono">¥${d.cost}</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] text-ink-500">
+          <span>📦 ${d.orders}单历史</span>
+          <span class="text-success-600 font-medium">✓ 成功率 ${d.successRate}%</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // 客户DNA卡
+  const renderCustomerDNA = () => customerDNA.map(c => `
+    <div class="border border-ink-200 rounded-xl p-4 hover:border-rose-300 hover:shadow-soft cursor-pointer card-hover">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl ${c.color} flex items-center justify-center text-white font-bold">${c.avatar}</div>
+          <div>
+            <div class="text-sm font-bold text-ink-900">${c.name}</div>
+            <div class="text-[10px] text-ink-500 font-mono">${c.id} · ${c.pattern}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-bold text-rose-600 font-mono">${c.score}</div>
+          <div class="text-[9px] text-ink-500">AI评分</div>
+        </div>
+      </div>
+      <div class="space-y-2 text-[11px]">
+        <div>
+          <div class="text-ink-500 mb-1">偏好特征</div>
+          <div class="flex flex-wrap gap-1">
+            ${c.preferences.map(p => `<span class="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-[10px]">${p}</span>`).join('')}
+          </div>
+        </div>
+        <div class="p-1.5 bg-ink-50 rounded text-[10px] text-ink-600 leading-relaxed">
+          <i class="fas fa-lightbulb text-rose-500 mr-1"></i>${c.historyInsight}
+        </div>
+        <div class="grid grid-cols-3 gap-1 text-center">
+          ${c.predictions.map(p => `
+            <div class="p-1 bg-white border border-ink-200 rounded">
+              <div class="text-[9px] text-ink-500">${p.t}</div>
+              <div class="text-[10px] font-bold text-rose-600">${p.v}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="text-[10px] text-ink-500">📦 ${c.orders}单历史</div>
+      </div>
+    </div>
+  `).join('');
+
+  // 供应商DNA卡
+  const renderSupplierDNA = () => supplierDNA.map(s => `
+    <div class="border border-ink-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-soft cursor-pointer card-hover">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white">
+            <i class="fas fa-truck"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-ink-900">${s.name}</div>
+            <div class="text-[10px] text-ink-500 font-mono">${s.id} · ${s.type}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-bold text-blue-600 font-mono">${s.score}</div>
+          <div class="text-[9px] text-ink-500">综合评分</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-1 text-center text-[11px] mb-2">
+        <div class="p-1 bg-ink-50 rounded">
+          <div class="text-[9px] text-ink-500">质量</div>
+          <div class="text-[10px] font-bold text-success-600">${s.quality}</div>
+        </div>
+        <div class="p-1 bg-ink-50 rounded">
+          <div class="text-[9px] text-ink-500">交期</div>
+          <div class="text-[10px] font-bold text-ink-700">${s.delivery}</div>
+        </div>
+        <div class="p-1 bg-ink-50 rounded">
+          <div class="text-[9px] text-ink-500">价格</div>
+          <div class="text-[10px] font-bold text-ink-700">${s.price}</div>
+        </div>
+      </div>
+      <div class="text-[10px] text-ink-500 mb-1">📦 ${s.cooperation}</div>
+      ${s.risks.length > 0 ? `
+        <div class="mb-1">
+          ${s.risks.map(r => `<span class="text-[10px] px-1.5 py-0.5 bg-warn-50 text-warn-700 rounded mr-1">⚠️ ${r}</span>`).join('')}
+        </div>
+      ` : '<div class="text-[10px] text-success-600 mb-1">✓ 无显著风险</div>'}
+      <div class="grid grid-cols-2 gap-1 text-center mt-2">
+        ${s.predictions.map(p => `
+          <div class="p-1 bg-blue-50 border border-blue-100 rounded">
+            <div class="text-[9px] text-ink-500">${p.t}</div>
+            <div class="text-[10px] font-bold text-blue-600">${p.v}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // 质量DNA卡
+  const renderQualityDNA = () => qualityDNA.map(q => `
+    <div class="border border-ink-200 rounded-xl p-4 hover:border-emerald-300 hover:shadow-soft cursor-pointer card-hover">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl ${q.color} flex items-center justify-center text-white">
+            <i class="fas fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-ink-900">${q.name}</div>
+            <div class="text-[10px] text-ink-500 font-mono">${q.id} · 更新 ${q.lastUpdate}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-bold text-emerald-600 font-mono">${q.score}</div>
+          <div class="text-[9px] text-ink-500">质量评分</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11px] mb-2">
+        <div class="p-1.5 bg-emerald-50 rounded">
+          <div class="text-[9px] text-ink-500">当前缺陷率</div>
+          <div class="text-sm font-bold text-emerald-700">${q.defectRate} <span class="text-[10px] text-ink-400">目标 ${q.target}</span></div>
+        </div>
+        <div class="p-1.5 bg-ink-50 rounded">
+          <div class="text-[9px] text-ink-500">趋势</div>
+          <div class="text-sm font-bold ${q.trend.includes('↑')?'text-success-600':'text-ink-700'}">${q.trend}</div>
+        </div>
+      </div>
+      <div class="mb-2">
+        <div class="text-[10px] text-ink-500 mb-1">常见缺陷</div>
+        ${q.commonDefects.map(d => `
+          <div class="flex items-center gap-1 text-[10px] py-0.5">
+            <span class="font-mono text-warn-600">${d.p}</span>
+            <span class="text-ink-700">${d.n}</span>
+            <span class="text-ink-400 ml-auto">→ ${d.p2}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div>
+        <div class="text-[10px] text-ink-500 mb-1">返工原因分布</div>
+        ${q.reworkReasons.map(r => `
+          <div class="flex items-center gap-2 text-[10px] mb-1">
+            <span class="w-16 text-ink-600">${r.n}</span>
+            <div class="flex-1 bg-ink-100 rounded-full h-1.5 overflow-hidden">
+              <div class="h-full bg-emerald-500" style="width:${r.p}"></div>
+            </div>
+            <span class="font-mono text-ink-500 w-8 text-right">${r.p}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // 设备DNA卡
+  const renderEquipmentDNA = () => equipmentDNA.map(e => `
+    <div class="border border-ink-200 rounded-xl p-4 hover:border-amber-300 hover:shadow-soft cursor-pointer card-hover">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl ${e.color} flex items-center justify-center text-white">
+            <i class="fas fa-gears"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-ink-900">${e.name}</div>
+            <div class="text-[10px] text-ink-500 font-mono">${e.id} · ${e.equipment}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-bold ${e.score>=85?'text-success-600':e.score>=70?'text-warn-600':'text-danger-600'} font-mono">${e.score}</div>
+          <div class="text-[9px] text-ink-500">健康度</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11px] mb-2">
+        <div class="p-1.5 ${e.efficiency.includes('76')?'bg-danger-50':'bg-success-50'} rounded">
+          <div class="text-[9px] text-ink-500">当前效率</div>
+          <div class="text-sm font-bold ${e.efficiency.includes('76')?'text-danger-700':'text-success-700'}">${e.efficiency} <span class="text-[10px] text-ink-400">目标 ${e.target}</span></div>
+        </div>
+        <div class="p-1.5 bg-ink-50 rounded">
+          <div class="text-[9px] text-ink-500">最近事件</div>
+          <div class="text-[11px] font-medium text-ink-700 truncate">${e.lastIncident}</div>
+        </div>
+      </div>
+      <div class="mb-2">
+        <div class="text-[10px] text-ink-500 mb-1">问题分布</div>
+        ${e.issues.map(i => `
+          <div class="flex items-center gap-2 text-[10px] mb-1">
+            <span class="w-16 text-ink-600">${i.n}</span>
+            <div class="flex-1 bg-ink-100 rounded-full h-1.5 overflow-hidden">
+              <div class="h-full ${parseInt(i.p)>30?'bg-danger-500':'bg-warn-500'}" style="width:${i.p}"></div>
+            </div>
+            <span class="font-mono text-ink-500 w-8 text-right">${i.p}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div>
+        <div class="text-[10px] text-ink-500 mb-1">维护计划</div>
+        <div class="flex flex-wrap gap-1">
+          ${e.maintenance.map(m => `<span class="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded">🔧 ${m}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('pageContainer').innerHTML = `
+    <div class="space-y-5 animate-fade-in">
+      <!-- 顶部 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-ai-500 to-indigo-500 text-white rounded-full font-medium">🧠 FACTORY BRAIN</span>
+            <span class="text-[10px] text-ink-500 font-mono">工厂大脑 · 五大DNA</span>
+          </div>
+          <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
+            <i class="fas fa-brain text-ai-500"></i> Factory Brain
+            <span class="text-xs font-normal text-ai-600 bg-ai-50 px-2 py-0.5 rounded-full">12,800+ 条目</span>
+          </h1>
+          <p class="text-xs text-ink-500 mt-1">工艺DNA · 客户DNA · 供应商DNA · 质量DNA · 设备DNA · 越用越聪明</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <input type="text" placeholder="搜索知识..." class="pl-8 pr-3 py-1.5 text-sm border border-ink-200 rounded-lg w-64 focus:outline-none focus:border-ai-400">
+            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400 text-sm"></i>
+          </div>
+          <button onclick="openCopilot(); sendQuick('这款雪纺面料容易起皱，怎么处理？')" class="ai-gradient text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-soft">
+            <i class="fas fa-microphone"></i> 老师傅对话
+          </button>
+        </div>
+      </div>
+
+      <!-- 知识库统计 -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        ${[
+          {n:'工艺DNA',v:'5',i:'fa-shirt',c:'ai',sub:'款型完整基因'},
+          {n:'客户DNA',v:'3',i:'fa-user-tie',c:'rose',sub:'行为+偏好'},
+          {n:'供应商DNA',v:'3',i:'fa-truck',c:'blue',sub:'合作+风险'},
+          {n:'质量DNA',v:'12',i:'fa-shield-halved',c:'emerald',sub:'缺陷+工艺'},
+          {n:'设备DNA',v:'8',i:'fa-gears',c:'amber',sub:'健康+效率'}
+        ].map(k => `
+          <div class="bg-white rounded-xl border border-ink-200 p-3 card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <div class="w-9 h-9 rounded-lg bg-${k.c}-50 text-${k.c}-600 flex items-center justify-center">
+                <i class="fas ${k.i}"></i>
+              </div>
+              <div class="text-2xl font-bold text-ink-900 font-mono">${k.v}</div>
+            </div>
+            <div class="text-xs font-semibold text-ink-800">${k.n}</div>
+            <div class="text-[10px] text-ink-500">${k.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- DNA类型Tab -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+        <div class="flex items-center gap-2 p-3 border-b border-ink-100 overflow-x-auto bg-gradient-to-r from-ai-50/30 to-transparent">
+          <div class="dna-tab active" data-tab="process" onclick="switchDnaTab('process')">
+            <i class="fas fa-shirt"></i>工艺DNA (5)
+          </div>
+          <div class="dna-tab" data-tab="customer" onclick="switchDnaTab('customer')">
+            <i class="fas fa-user-tie"></i>客户DNA (3)
+          </div>
+          <div class="dna-tab" data-tab="supplier" onclick="switchDnaTab('supplier')">
+            <i class="fas fa-truck"></i>供应商DNA (3)
+          </div>
+          <div class="dna-tab" data-tab="quality" onclick="switchDnaTab('quality')">
+            <i class="fas fa-shield-halved"></i>质量DNA (3)
+          </div>
+          <div class="dna-tab" data-tab="equipment" onclick="switchDnaTab('equipment')">
+            <i class="fas fa-gears"></i>设备DNA (3)
+          </div>
+        </div>
+        <div id="dnaTabContent" class="p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${renderProcessDNA()}
+          </div>
+        </div>
+      </div>
+
+      <!-- 老师傅对话 + 跨工厂知识迁移 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+          <h2 class="text-base font-bold text-ink-900 mb-3 flex items-center gap-2">
+            👴 老师傅对话系统
+            <span class="text-xs font-normal text-ink-500">AI沉淀经验</span>
+          </h2>
+          <div class="space-y-2.5">
+            ${[
+              {q:'雪纺面料容易起皱怎么处理？',a:'建议：① 低温熨烫（≤120℃） ② 加柔顺剂浸泡 ③ 真空密封包装。参考订单HT-2026-005的成功案例。', conf:94},
+              {q:'涤纶里布缩水怎么办？',a:'建议：① 预缩处理（蒸汽） ② 控制水洗温度≤30℃ ③ 使用防缩剂。历史成功率98%。', conf:96},
+              {q:'羽绒服钻绒如何修复？',a:'建议：① 加密度内胆 ② 双线锁边 ③ 控制针距≤3.5mm。可参考DNA-2026-005的工艺参数。', conf:91}
+            ].map((qa, i) => `
+              <details class="bg-ink-50 rounded-lg p-3" ${i===0?'open':''}>
+                <summary class="cursor-pointer text-xs font-medium text-ink-800 flex items-center gap-2">
+                  <i class="fas fa-comment-dots text-ai-500"></i>
+                  ${qa.q}
+                  <span class="ml-auto text-[10px] text-success-600 font-mono">AI置信度 ${qa.conf}%</span>
+                </summary>
+                <div class="mt-2 pl-5 text-[11px] text-ink-700 leading-relaxed">
+                  ${qa.a}
+                </div>
+              </details>
+            `).join('')}
+          </div>
+          <div class="mt-3 flex gap-2">
+            <input type="text" placeholder="向老师傅提问..." class="flex-1 px-3 py-2 text-xs border border-ink-200 rounded-lg focus:outline-none focus:border-ai-400">
+            <button class="ai-gradient text-white px-3 rounded-lg text-xs"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+          <h2 class="text-base font-bold text-ink-900 mb-3 flex items-center gap-2">
+            🌐 跨工厂知识迁移
+            <span class="text-xs font-normal text-ink-500">本厂 · 集团 · 行业</span>
+          </h2>
+          <div class="space-y-3">
+            <div class="p-3 bg-gradient-to-br from-ai-50 to-indigo-50 border border-ai-200 rounded-lg">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-lightbulb text-ai-500"></i>
+                <span class="text-xs font-semibold text-ai-700">知识蒸馏 · 行业智慧层</span>
+              </div>
+              <div class="text-[11px] text-ink-700 leading-relaxed">本厂经验已脱敏上传模型梯度，共享到行业通用模型。本月已为 12 家工厂贡献 38 条最佳实践。</div>
+            </div>
+            <div class="space-y-2">
+              <div class="text-[10px] text-ink-500 font-medium">最近迁移</div>
+              ${[
+                {from:'鸿泰制衣',to:'华美服装',type:'法式茶歇裙工艺',score:'+5%'},
+                {from:'华美服装',to:'鸿泰制衣',type:'羽绒外协策略',score:'+8%'},
+                {from:'行业最佳实践',to:'鸿泰制衣',type:'面料预缩参数',score:'+3%'}
+              ].map(t => `
+                <div class="flex items-center gap-2 p-2 hover:bg-ink-50 rounded text-[11px]">
+                  <span class="w-2 h-2 bg-success-500 rounded-full"></span>
+                  <span class="text-ink-700 flex-1"><span class="font-medium">${t.from}</span> → <span class="font-medium">${t.to}</span> · ${t.type}</span>
+                  <span class="text-success-600 font-mono text-[10px]">${t.score}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DNA关联图谱预览 (P2 占位) -->
+      <div class="bg-gradient-to-br from-ai-50 via-brand-50 to-indigo-50 rounded-2xl border border-ai-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
+            🔗 DNA 关联图谱
+            <span class="text-[10px] text-ai-600 bg-white px-2 py-0.5 rounded">P2预览</span>
+          </h2>
+          <span class="text-[10px] text-ink-500">展示 DNA 之间的关联关系</span>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-2 text-center">
+          <div class="p-3 bg-white rounded-xl border-2 border-rose-200 min-w-[120px]">
+            <i class="fas fa-user-tie text-rose-500 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">客户DNA</div>
+            <div class="text-[10px] text-ink-500">下单偏好</div>
+          </div>
+          <i class="fas fa-arrow-right text-ink-400"></i>
+          <div class="p-3 bg-white rounded-xl border-2 border-ai-300 ring-2 ring-ai-200 min-w-[120px]">
+            <i class="fas fa-file-invoice text-ai-500 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">订单</div>
+            <div class="text-[10px] text-ink-500">业务核心</div>
+          </div>
+          <i class="fas fa-arrow-right text-ink-400"></i>
+          <div class="p-3 bg-white rounded-xl border-2 border-ai-400 ring-2 ring-ai-300 min-w-[120px]">
+            <i class="fas fa-shirt text-ai-600 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">工艺DNA</div>
+            <div class="text-[10px] text-ink-500">生产参数</div>
+          </div>
+          <i class="fas fa-arrow-right text-ink-400"></i>
+          <div class="p-3 bg-white rounded-xl border-2 border-emerald-200 min-w-[120px]">
+            <i class="fas fa-shield-halved text-emerald-500 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">质量DNA</div>
+            <div class="text-[10px] text-ink-500">缺陷预防</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-2 text-center mt-2">
+          <div class="p-3 bg-white rounded-xl border-2 border-blue-200 min-w-[120px]">
+            <i class="fas fa-truck text-blue-500 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">供应商DNA</div>
+            <div class="text-[10px] text-ink-500">物料供应</div>
+          </div>
+          <div class="p-3 bg-white rounded-xl border-2 border-amber-200 min-w-[120px]">
+            <i class="fas fa-gears text-amber-500 text-xl mb-1"></i>
+            <div class="text-xs font-semibold text-ink-900">设备DNA</div>
+            <div class="text-[10px] text-ink-500">产能保障</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // DNA Tab 切换
+  window.switchDnaTab = (tab) => {
+    document.querySelectorAll('.dna-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.dna-tab[data-tab="${tab}"]`).classList.add('active');
+    const content = document.getElementById('dnaTabContent');
+    let html = '';
+    if (tab === 'process') html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${renderProcessDNA()}</div>`;
+    else if (tab === 'customer') html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${renderCustomerDNA()}</div>`;
+    else if (tab === 'supplier') html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${renderSupplierDNA()}</div>`;
+    else if (tab === 'quality') html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${renderQualityDNA()}</div>`;
+    else if (tab === 'equipment') html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${renderEquipmentDNA()}</div>`;
+    content.innerHTML = html;
+  };
+}
+
+/* ============== 12. 数据看板 ============== */
 function renderDashboard() {
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
@@ -1876,7 +3494,7 @@ function renderDashboard() {
             {label:'营收',data:[68,72,75,82,78,86,92,98],borderColor:palette.success,backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,fill:true},
             {label:'成本',data:[48,52,55,58,56,62,68,72],borderColor:palette.danger,backgroundColor:'rgba(244,63,94,0.1)',tension:0.4,fill:true}
           ]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
       });
     }
     if (document.getElementById('orderStatusChart')) {
@@ -1884,8 +3502,8 @@ function renderDashboard() {
         type:'doughnut', data:{
           labels:['进行中','已出货','延期','待开始'],
           datasets:[{data:[14,8,3,5],backgroundColor:[palette.brand,palette.success,palette.danger,palette.warn],borderWidth:0}]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}}
-      );
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+      });
     }
     if (document.getElementById('capacityChart')) {
       charts.capacity = new Chart(document.getElementById('capacityChart'), {
@@ -1895,7 +3513,7 @@ function renderDashboard() {
             {label:'当前产量',data:[1200,1100,950,680,920,720,650,480,520],backgroundColor:palette.brand},
             {label:'目标产量',data:[1300,1200,1100,900,1000,800,700,500,550],backgroundColor:palette.ink}
           ]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
       });
     }
     if (document.getElementById('alertChart')) {
@@ -1915,7 +3533,7 @@ function renderDashboard() {
             borderColor:palette.ai,
             pointBackgroundColor:palette.ai
           }]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{r:{ticks:{font:{size:9}}}}}}
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{r:{ticks:{font:{size:9}}}}}
       });
     }
   }, 100);
@@ -2398,7 +4016,7 @@ function renderInventory() {
             {label:'32支精梳棉',data:[36.5,36.2,36.0,35.8,36.0,35.5,35.8,36.0],borderColor:'#10b981',tension:0.3},
             {label:'印花工艺',data:[42,43,44,44.5,45,45.5,46,47],borderColor:'#8b5cf6',tension:0.3}
           ]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
       });
     }
   }, 100);
@@ -2487,7 +4105,7 @@ function renderPattern() {
           {label:'当前报价',data:[28.5,15.2,4.8,8.0,2.5,1.8,1.5],borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.15)',tension:0.3,fill:true},
           {label:'AI优化后',data:[25.5,14.0,4.5,5.0,2.2,1.6,1.3],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.15)',tension:0.3,fill:true}
         ]
-      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+      }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
     });
   }, 100);
 }
@@ -2634,7 +4252,7 @@ function renderQC() {
       type:'bar', data:{
         labels:['裁剪A','裁剪B','缝制A','缝制B','缝制C','后整A','后整B','包装A','包装B'],
         datasets:[{label:'合格率(%)',data:[99.2,98.8,98.5,93.0,98.2,97.5,98.0,99.5,99.0],backgroundColor:['#10b981','#10b981','#10b981','#f43f5e','#10b981','#10b981','#10b981','#10b981','#10b981']}]
-      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+      }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
     });
   }, 100);
 }
@@ -2779,16 +4397,16 @@ function renderFinance() {
             {label:'成本',data:[265,290,310,328,290,348],borderColor:'#f43f5e',tension:0.4},
             {label:'利润',data:[115,130,145,150,142,138],borderColor:'#10b981',tension:0.4,fill:true,backgroundColor:'rgba(16,185,129,0.1)'}
           ]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
       });
     }
     if (document.getElementById('costStructChart')) {
       charts.costStruct = new Chart(document.getElementById('costStructChart'), {
         type:'doughnut', data:{
           labels:['面料','人工','外协','辅料','运输','其他'],
-          datasets:[{data:[42,28,15,8,4,3],backgroundColor:['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06b6d4','#64748b'],borderWidth:0}]
-        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}}
-      );
+          datasets:[{data:[42,28,15,8,4,3],backgroundColor:['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06d4e9','#64748b'],borderWidth:0}]
+        }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+      });
     }
   }, 100);
 }
@@ -3099,35 +4717,96 @@ function renderDistribution() {
   `;
 }
 
-/* ============== 21. 预警中心 ============== */
+/* ============== 21. 风险中心（预警中心 升级版）============== */
 function renderAlerts() {
+  // 生命周期格式化
+  const formatTime = (t) => t ? new Date(t).toTimeString().slice(0,5) : '-';
+  const formatElapsed = (t) => {
+    if (!t) return '-';
+    const diff = (Date.now() - new Date(t).getTime()) / 1000 / 60;
+    return diff < 60 ? `${Math.floor(diff)}分钟前` : `${Math.floor(diff/60)}小时前`;
+  };
+
+  // 渲染生命周期时间线
+  const renderLifecycle = (lc) => {
+    const steps = [
+      {key:'discoveredAt', name:'发现', icon:'fa-eye'},
+      {key:'analyzedAt', name:'分析', icon:'fa-magnifying-glass'},
+      {key:'solutionGeneratedAt', name:'方案', icon:'fa-lightbulb'},
+      {key:'approvedAt', name:'审批', icon:'fa-check'},
+      {key:'executedAt', name:'执行', icon:'fa-play'},
+      {key:'verifiedAt', name:'验证', icon:'fa-circle-check'},
+      {key:'learnedAt', name:'学习', icon:'fa-brain'}
+    ];
+    const lastFilledIdx = steps.findIndex((s, i) => !lc[s.key] && i > 0 && lc[steps[i-1].key]);
+
+    return `<div class="space-y-0">
+      ${steps.map((s, i) => {
+        const time = lc[s.key];
+        const isCompleted = !!time;
+        const isCurrent = !isCompleted && i === (lastFilledIdx === -1 ? steps.length - 1 : lastFilledIdx);
+        return `
+          <div class="lifecycle-step">
+            <div class="lifecycle-dot ${isCompleted?'bg-success-500 text-white':isCurrent?'bg-ai-500 text-white animate-pulse':'bg-ink-200 text-ink-500'}">
+              <i class="fas ${s.icon} text-[8px]"></i>
+            </div>
+            <div class="flex-1 pb-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium ${isCompleted?'text-success-700':isCurrent?'text-ai-700':'text-ink-400'}">${s.name}</span>
+                <span class="text-[10px] font-mono ${isCompleted?'text-success-600':isCurrent?'text-ai-600':'text-ink-400'}">${isCompleted?formatTime(time):isCurrent?'进行中':'-'}</span>
+              </div>
+              ${isCompleted && i===0 ? `<div class="text-[9px] text-ink-500 mt-0.5">${formatElapsed(time)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+  };
+
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
-      <div class="flex items-center justify-between">
+      <!-- 顶部 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-danger-500 to-rose-500 text-white rounded-full font-medium">⚠️ RISK CENTER</span>
+            <span class="text-[10px] text-ink-500 font-mono">因果推理 + 闭环追踪 + 经验沉淀</span>
+          </div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
-            <i class="fas fa-triangle-exclamation text-danger-500"></i> 预警中心
-            <span class="text-xs font-normal text-ink-500">因果推理引擎 · 处方级预警</span>
+            <i class="fas fa-triangle-exclamation text-danger-500"></i> 风险中心
+            <span class="text-xs font-normal text-ink-500">不是"发现问题后记录"，而是"全程闭环追踪"</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">不是"库存低了"，而是告诉你"为什么低、该怎么办、最优方案是什么"</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <button class="px-3 py-1.5 border border-ink-200 rounded-lg hover:bg-ink-50">
+            <i class="fas fa-filter mr-1"></i>筛选
+          </button>
+          <button class="px-3 py-1.5 border border-ink-200 rounded-lg hover:bg-ink-50">
+            <i class="fas fa-chart-line mr-1"></i>趋势
+          </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <!-- 状态统计 + 闭环统计 -->
+      <div class="grid grid-cols-2 md:grid-cols-7 gap-2">
         ${[
-          {n:'紧急',v:1,c:'danger',i:'fa-circle-exclamation'},
-          {n:'高',v:1,c:'warn',i:'fa-triangle-exclamation'},
-          {n:'中',v:1,c:'brand',i:'fa-circle-info'},
-          {n:'已处理',v:8,c:'success',i:'fa-check-circle'}
+          {n:'未处理',v:1,c:'ink',i:'fa-inbox'},
+          {n:'AI分析中',v:0,c:'brand',i:'fa-magnifying-glass'},
+          {n:'方案待审批',v:3,c:'warn',i:'fa-lightbulb'},
+          {n:'执行中',v:0,c:'ai',i:'fa-arrows-spin'},
+          {n:'待验证',v:0,c:'cyan',i:'fa-circle-check'},
+          {n:'已闭环',v:0,c:'success',i:'fa-check-double'},
+          {n:'已沉淀',v:closedAlerts.length,c:'ai',i:'fa-brain'}
         ].map(k => `
-          <div class="bg-white rounded-xl border border-ink-200 p-3 card-hover">
-            <i class="fas ${k.i} text-${k.c}-500 text-sm mb-1.5"></i>
-            <div class="text-xl font-bold text-ink-900 font-mono">${k.v}</div>
-            <div class="text-[10px] text-ink-500">${k.n}级</div>
+          <div class="bg-white rounded-xl border border-ink-200 p-2.5 card-hover">
+            <i class="fas ${k.i} text-${k.c}-500 text-xs mb-1"></i>
+            <div class="text-lg font-bold text-ink-900 font-mono">${k.v}</div>
+            <div class="text-[9px] text-ink-500">${k.n}</div>
           </div>
         `).join('')}
       </div>
 
+      <!-- 活跃预警列表 -->
       <div class="space-y-4">
         ${alerts.map(a => `
           <div class="bg-white rounded-2xl border-2 border-${a.level==='danger'?'danger':'warn'}-200 shadow-soft overflow-hidden">
@@ -3137,19 +4816,20 @@ function renderAlerts() {
                   <i class="fas fa-${a.level==='danger'?'circle-exclamation':'triangle-exclamation'} text-lg"></i>
                 </div>
                 <div class="flex-1">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 mb-1">
                     <span class="text-[10px] px-2 py-0.5 rounded-full bg-${a.level==='danger'?'danger':'warn'}-500 text-white font-bold">${a.levelText}级</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-ai-100 text-ai-700 font-medium">${a.lifecycleStatus}</span>
                     <span class="text-sm font-bold text-ink-900">${a.title}</span>
-                    <span class="text-[10px] text-ai-600 font-mono">AI置信度 ${85+Math.floor(Math.random()*10)}%</span>
                   </div>
+                  <span class="text-[10px] text-ai-600 font-mono">AI置信度 ${85+Math.floor(Math.random()*10)}%</span>
                 </div>
-                <span class="text-[10px] text-ink-500">2分钟前</span>
+                <span class="text-[10px] text-ink-500">${formatElapsed(a.lifecycle.discoveredAt)}</span>
               </div>
             </div>
             <div class="p-5">
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div>
-                  <h4 class="text-xs font-bold text-ink-800 mb-2">🔍 根因分析（贝叶斯网络因果推断）</h4>
+                  <h4 class="text-xs font-bold text-ink-800 mb-2">🔍 根因分析</h4>
                   <div class="space-y-1.5">
                     ${a.causeChain.map((c, i) => `
                       <div class="flex items-center gap-2">
@@ -3161,7 +4841,7 @@ function renderAlerts() {
                   </div>
                 </div>
                 <div>
-                  <h4 class="text-xs font-bold text-ink-800 mb-2">💡 最优解法（强化学习生成）</h4>
+                  <h4 class="text-xs font-bold text-ink-800 mb-2">💡 最优解法</h4>
                   <div class="space-y-1.5">
                     ${a.solutions.map(s => `
                       <div class="p-2.5 border ${s.recommended?'border-success-300 bg-success-50/40 ring-1 ring-success-200':'border-ink-200'} rounded-lg">
@@ -3180,6 +4860,12 @@ function renderAlerts() {
                     `).join('')}
                   </div>
                 </div>
+                <div>
+                  <h4 class="text-xs font-bold text-ink-800 mb-2 flex items-center gap-1.5">
+                    <i class="fas fa-route text-ai-500"></i> 闭环时间线
+                  </h4>
+                  ${renderLifecycle(a.lifecycle)}
+                </div>
               </div>
               <div class="mt-4 pt-4 border-t border-ink-100 flex items-center justify-between">
                 <div class="text-[11px] text-ink-600">
@@ -3195,6 +4881,36 @@ function renderAlerts() {
             </div>
           </div>
         `).join('')}
+      </div>
+
+      <!-- 已闭环列表 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+        <div class="p-4 border-b border-ink-100 flex items-center justify-between">
+          <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
+            ✓ 已闭环 · 经验沉淀
+            <span class="text-xs font-normal text-ai-600 bg-ai-50 px-2 py-0.5 rounded-full">${closedAlerts.length} 项</span>
+          </h2>
+          <button onclick="navigate('ai-decisions')" class="text-xs text-ai-600 hover:text-ai-700">查看完整决策记录 →</button>
+        </div>
+        <div class="divide-y divide-ink-100">
+          ${closedAlerts.map(c => `
+            <div class="p-3 hover:bg-ink-50/50 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg ${c.level==='danger'?'bg-danger-500':'bg-warn-500'} flex items-center justify-center text-white shrink-0">
+                <i class="fas fa-check text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-semibold text-ink-900 truncate">${c.title}</div>
+                <div class="text-[10px] text-ink-500 mt-0.5">
+                  ${c.closedAt} · 实际效果：<span class="text-success-700 font-medium">${c.actualEffect}</span>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="text-[10px] px-2 py-0.5 bg-ai-50 text-ai-700 rounded font-mono">${c.learned}</span>
+                <div class="text-[10px] text-ink-500 mt-0.5">已沉淀</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
       </div>
     </div>
   `;
@@ -3352,7 +5068,7 @@ function renderEvolution() {
           {label:'品控Agent',data:[85,86,88,89,90,91,92,92,93,93,93,94],borderColor:'#f43f5e',tension:0.3},
           {label:'经营Agent',data:[80,82,84,85,87,88,89,89,90,90,91,91],borderColor:'#8b5cf6',tension:0.3}
         ]
-      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{min:70,max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}}
+      }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{min:70,max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
     });
   }, 100);
 }
