@@ -124,11 +124,56 @@ canvas { max-width:100%; max-height:400px; }
 .lifecycle-dot { width:20px; height:20px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
 .exec-card-pulse { position:relative; }
 .exec-card-pulse::before { content:''; position:absolute; top:-2px; left:-2px; right:-2px; bottom:-2px; border-radius:14px; background:linear-gradient(135deg,rgba(139,92,246,0.4),rgba(99,102,241,0.2)); z-index:-1; opacity:0; animation:aiPulse 2.4s ease-in-out infinite; }
+
+/* ============ 跳转定位高亮(从 Today Mission 跳转过来时) ============ */
+.mission-highlight {
+  position: relative;
+  animation: missionHighlightFade 3s ease-out forwards;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.4), 0 0 24px -4px rgba(139,92,246,0.5);
+}
+@keyframes missionHighlightFade {
+  0%   { box-shadow: 0 0 0 0 rgba(139,92,246,0.7), 0 0 32px -2px rgba(139,92,246,0.7); transform: scale(1.01); }
+  20%  { box-shadow: 0 0 0 4px rgba(139,92,246,0.5), 0 0 28px -2px rgba(139,92,246,0.6); transform: scale(1.005); }
+  100% { box-shadow: 0 0 0 0 rgba(139,92,246,0), 0 0 0 rgba(139,92,246,0); transform: scale(1); }
+}
 .quick-approve-btn { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:white; box-shadow:0 2px 8px rgba(139,92,246,0.25); transition:all .2s; }
 .quick-approve-btn:hover { box-shadow:0 4px 16px rgba(139,92,246,0.4); transform:translateY(-1px); }
 .kpi-up { color:#10b981; }
 .kpi-down { color:#f43f5e; }
 .kpi-flat { color:#64748b; }
+
+/* ============ V3.1 优化:AI分级标签 L0-L4 (PRD §2.2) ============ */
+.lvl-badge { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; letter-spacing:.3px; cursor:help; border:1px solid transparent; }
+.lvl-badge .lvl-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.lvl-L0 { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+.lvl-L0 .lvl-dot { background:#94a3b8; }
+.lvl-L1 { background:#ecfeff; color:#0e7490; border-color:#a5f3fc; }
+.lvl-L1 .lvl-dot { background:#06b6d4; }
+.lvl-L2 { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.lvl-L2 .lvl-dot { background:#3b82f6; }
+.lvl-L3 { background:#fef3c7; color:#b45309; border-color:#fde68a; }
+.lvl-L3 .lvl-dot { background:#f59e0b; }
+.lvl-L4 { background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
+.lvl-L4 .lvl-dot { background:#ef4444; }
+/* L0-L4 描述tooltip */
+.lvl-badge[data-tip]:hover::after { content:attr(data-tip); position:absolute; transform:translate(-50%,-130%); background:#0f172a; color:white; padding:6px 10px; border-radius:6px; font-size:10px; font-weight:500; white-space:nowrap; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.2); font-family:'Noto Sans SC',sans-serif; letter-spacing:0; }
+.lvl-badge { position:relative; }
+.lvl-L4-disabled { opacity:.5; text-decoration:line-through; }
+/* 数据来源标识 */
+.src-tag { display:inline-flex; align-items:center; gap:4px; font-size:10px; color:#64748b; padding:2px 7px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+.src-tag i { font-size:9px; color:#94a3b8; }
+.src-tag.src-mock { color:#b45309; background:#fffbeb; border-color:#fde68a; }
+.src-tag.src-mock i { color:#d97706; }
+/* 演示水印 */
+.demo-watermark { position:fixed; right:14px; bottom:14px; z-index:40; font-size:10px; padding:5px 10px; background:rgba(255,255,255,.85); border:1px dashed #cbd5e1; color:#64748b; border-radius:14px; backdrop-filter:blur(6px); display:flex; align-items:center; gap:5px; pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+.demo-watermark i { color:#f59e0b; }
+/* 闭环四要素标签 */
+.loop-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px; background:linear-gradient(90deg,#f8fafc,#f1f5f9); border-radius:8px; }
+.loop-step { display:flex; flex-direction:column; gap:2px; padding:6px 8px; background:white; border-radius:5px; border:1px solid #e2e8f0; }
+.loop-step-num { font-size:9px; font-weight:700; color:#7c3aed; font-family:'JetBrains Mono',monospace; }
+.loop-step-name { font-size:10px; font-weight:600; color:#334155; }
+.loop-step-desc { font-size:9px; color:#94a3b8; line-height:1.3; }
+@media (max-width: 768px) { .loop-4 { grid-template-columns:repeat(2,1fr); } }
 </style>
 </head>
 <body class="text-ink-800">
@@ -288,6 +333,7 @@ canvas { max-width:100%; max-height:400px; }
 
 <!-- ============== 主应用 ============== -->
 <div id="mainApp" class="hidden min-h-screen flex flex-col bg-ink-50">
+  <div id="demoWatermark" class="demo-watermark"><i class="fas fa-flask"></i>演示数据 · 真实落地需POC验证</div>
 
   <!-- 顶栏 -->
   <header class="glass-strong sticky top-0 z-30 border-b border-ink-200/60">
@@ -345,8 +391,16 @@ canvas { max-width:100%; max-height:400px; }
     <!-- 左侧导航 -->
     <aside id="sidebar" class="w-60 bg-white border-r border-ink-200 overflow-y-auto scrollbar-thin hidden lg:block">
       <nav class="p-3 space-y-1">
-        <!-- 工作台（AI-Native 核心入口） -->
+        <!-- V3.1 数据层(P0基础设施) -->
         <div class="px-2 py-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fas fa-database text-cyan-500"></i> 数据层
+        </div>
+        <div class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="data-collection" onclick="navigate('data-collection')">
+          <i class="fas fa-mobile-screen-button text-base w-5 text-center text-cyan-500"></i><span>M0 车间采集</span>
+          <span class="ml-auto bg-cyan-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">P0</span>
+        </div>
+        <!-- 工作台（AI-Native 核心入口） -->
+        <div class="px-2 py-1.5 mt-2 text-[10px] font-bold text-ink-400 uppercase tracking-wider flex items-center gap-1.5">
           <i class="fas fa-sparkles text-ai-400"></i> 工作台
         </div>
         <div class="sidebar-item active flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm" data-page="home" onclick="navigate('home')">
@@ -975,6 +1029,102 @@ const missionCenterData = {
   ]
 };
 
+// ============== AI 数字员工 Agent 数据(全局,详情弹窗复用) ==============
+const agentsData = [
+  {id:'planner', name:'AI 计划员', icon:'fa-calendar-check', dept:'生产排程部', color:'from-blue-500 to-cyan-500', accent:'blue', acc:89, trend:'+2%',
+    monthlyGoal:'确保订单准时率 > 95%（当前94.2%）',
+    currentTasks:14, executing:'30天排产方案发布', execProgress:83,
+    pending:3, pendingItems:[
+      '调整缝制B组保养期间的产能分配',
+      '订单HT-0625-002提前到本周五开工',
+      '外协2000件给佛山金辉'
+    ],
+    contributions:[
+      {label:'追回延期', value:'8次', icon:'fa-clock'},
+      {label:'节省工时', value:'142h', icon:'fa-hourglass-half'},
+      {label:'产能利用率提升', value:'+12%', icon:'fa-gauge-high'},
+      {label:'方案采纳率', value:'92%', icon:'fa-thumbs-up'}
+    ],
+    accuracyTrend:[78,80,82,83,85,86,87,87,88,89,90,92],
+    kpi:[{n:'排产建议采纳率',v:'92%'},{n:'交期预测准确率',v:'89%'},{n:'产能利用率',v:'87%'},{n:'本月节省工时',v:'142h'}],
+    history:[
+      {time:'08:30',action:'生成30天排产方案',result:'采纳'},
+      {time:'14:20',action:'检测到B组保养冲突',result:'自动调整'},
+      {time:'16:45',action:'外协方案生成',result:'待确认'}
+    ],
+    config:{autoThreshold:'¥10,000',pushFreq:'实时',scope:'厂长 + 计划员',modelVersion:'v3.2',knowledgeBase:'排产规则 + 设备DNA + 工艺DNA',learningMode:'在线学习（每日）'},
+    skills:['排产优化','产能平衡','交期预测','设备保养冲突检测']
+  },
+  {id:'buyer', name:'AI 采购员', icon:'fa-cart-shopping', dept:'采购部', color:'from-emerald-500 to-teal-500', accent:'emerald', acc:91, trend:'+3%',
+    monthlyGoal:'库存健康度 > 85%（当前87%）',
+    currentTasks:6, executing:'聚酯面料Q3合同锁定', execProgress:67,
+    pending:2, pendingItems:[
+      '锁定聚酯面料Q3合同（预估节省¥15,000）',
+      '黑色涤纶面料紧急采购（已生成订单）'
+    ],
+    contributions:[
+      {label:'本月节省', value:'¥8.6k', icon:'fa-piggy-bank'},
+      {label:'紧急采购', value:'3次', icon:'fa-bolt'},
+      {label:'价格预测准确', value:'88%', icon:'fa-arrow-trend-up'},
+      {label:'库存周转', value:'18天', icon:'fa-arrows-rotate'}
+    ],
+    accuracyTrend:[75,76,78,80,82,83,84,85,86,86,87,88],
+    kpi:[{n:'采购成本节省',v:'¥8.6k/月'},{n:'库存周转天数',v:'18天'},{n:'供应商准时率',v:'94%'},{n:'价格预测准确率',v:'88%'}],
+    history:[
+      {time:'09:15',action:'监控到聚酯面料涨价',result:'已预警'},
+      {time:'11:30',action:'生成紧急采购单PUR-001',result:'已审批'},
+      {time:'15:00',action:'评估Q3合同方案',result:'待确认'}
+    ],
+    config:{autoThreshold:'¥5,000',pushFreq:'实时',scope:'厂长 + 采购员',modelVersion:'v2.8',knowledgeBase:'供应商DNA + 价格历史 + 库存规则',learningMode:'在线学习（每日）'},
+    skills:['价格预测','供应商评估','库存优化','紧急采购']
+  },
+  {id:'qc', name:'AI 品控员', icon:'fa-shield-halved', dept:'品控部', color:'from-rose-500 to-pink-500', accent:'rose', acc:94, trend:'+1%',
+    monthlyGoal:'返工率 < 3.5%（当前3.2% ✓）',
+    currentTasks:9, executing:'B组返工率整改', execProgress:50,
+    pending:2, pendingItems:[
+      'B组返工率异常整改（4项措施待执行）',
+      '新批次面料预缩工序优化'
+    ],
+    contributions:[
+      {label:'拦截质量问题', value:'15次', icon:'fa-shield'},
+      {label:'一次合格率', value:'97.8%', icon:'fa-check-double'},
+      {label:'返工率', value:'3.2%', icon:'fa-rotate-left'},
+      {label:'检测准确率', value:'99.2%', icon:'fa-bullseye'}
+    ],
+    accuracyTrend:[85,86,88,89,90,91,92,92,93,93,93,94],
+    kpi:[{n:'一次合格率',v:'97.8%'},{n:'返工率',v:'3.2%'},{n:'客户投诉',v:'0.3%'},{n:'检测准确率',v:'99.2%'}],
+    history:[
+      {time:'10:00',action:'检测到B组返工率异常',result:'已分析'},
+      {time:'10:30',action:'生成根因分析报告',result:'已推送'},
+      {time:'13:20',action:'整改方案已制定',result:'执行中'}
+    ],
+    config:{autoThreshold:'¥0',pushFreq:'实时',scope:'厂长 + 品控员',modelVersion:'v3.0',knowledgeBase:'质量DNA + 缺陷库 + 工艺参数',learningMode:'在线学习（每日）'},
+    skills:['缺陷识别','根因分析','工艺优化','设备异常检测']
+  },
+  {id:'analyst', name:'AI 经营分析师', icon:'fa-chart-pie', dept:'经营分析部', color:'from-ai-500 to-indigo-500', accent:'ai', acc:91, trend:'+4%',
+    monthlyGoal:'归因准确率 > 90%（当前91% ✓）',
+    currentTasks:5, executing:'本周经营报告生成', execProgress:90,
+    pending:1, pendingItems:[
+      '生成PPT周报（今日18:00前完成）'
+    ],
+    contributions:[
+      {label:'报告生成', value:'48份', icon:'fa-file-powerpoint'},
+      {label:'趋势预测准确', value:'88%', icon:'fa-chart-line'},
+      {label:'决策建议', value:'23条', icon:'fa-lightbulb'},
+      {label:'节省成本', value:'¥32k', icon:'fa-sack-dollar'}
+    ],
+    accuracyTrend:[80,82,84,85,87,88,89,89,90,90,91,91],
+    kpi:[{n:'报告生成数',v:'48份'},{n:'归因准确率',v:'91%'},{n:'趋势预测准确',v:'88%'},{n:'客户满意度',v:'96%'}],
+    history:[
+      {time:'06:00',action:'自动生成日报',result:'已发布'},
+      {time:'14:30',action:'完成利润归因分析',result:'已生成报告'},
+      {time:'17:00',action:'周报PPT生成中',result:'进行中'}
+    ],
+    config:{autoThreshold:'¥0',pushFreq:'每日6:00',scope:'厂长 + 管理员',modelVersion:'v2.5',knowledgeBase:'财务数据 + 业务数据 + 历史报告',learningMode:'周级学习'},
+    skills:['利润归因','趋势预测','报告生成','经营诊断']
+  }
+];
+
 // DNA 类型数据（Factory Brain 新增类型）
 const customerDNA = [
   {id:'CDNA-C001', name:'广州优品服饰', category:'客户DNA', pattern:'小批量多频次', orders:28, score:96, color:'bg-rose-500', avatar:'优',
@@ -1126,6 +1276,8 @@ let currentPage = 'home';
 let currentRole = 'admin';
 let chatHistory = [];
 let charts = {};
+// 跨页跳转定位(从 Today Mission → Mission Center 时,记录目标 Tab + 任务 ID)
+let missionCenterTarget = null;  // 格式: { tab: 'pending'|'executing'|'completed', id: 'MSN-...' }
 
 /* ============== 3. 工具函数 ============== */
 function showToast(msg, type='info', duration=3000) {
@@ -1231,7 +1383,16 @@ function toggleSidebar() {
 function openCopilot() {
   document.getElementById('copilotDrawer').classList.remove('hidden');
   if (chatHistory.length === 0) {
-    addAIMessage('你好，我是秩云 AI Copilot。我可以帮你处理订单、排产、采购、品控、财务等所有业务。\n\n试试问我：\n• "我有哪些订单有延期风险？"\n• "未来7天哪些物料会短缺？"\n• "帮我生成下周采购计划"\n• "分析本月利润下降原因"');
+    addAIMessage(`你好,我是秩云 AI Copilot <span class="lvl-badge lvl-L1" style="margin-left:4px"><span class="lvl-dot"></span>L1</span>。<br/>
+      <span class="text-[10px] text-ink-500">当前实现:<b>规则化意图识别 + 结构化查询</b>(P1);<span class="text-amber-600">大模型+RAG企业知识库列入P3,需P0-P2先累积数据</span></span><br/><br/>
+      我能基于真实数据(订单/库存/排产/财务)回答业务问题,每条回答都会标注<b>数据来源</b>和<b>可执行等级</b>。<br/><br/>
+      <span class="text-[10px] text-ink-500">试试问我:</span><br/>
+      • "我有哪些订单有延期风险?"<br/>
+      • "未来7天哪些物料会短缺?"<br/>
+      • "帮我生成下周采购计划"<br/>
+      • "分析本月利润下降原因"<br/>
+      <br/>
+      <span class="text-[10px] text-ink-400">⚠️ 本期不做:跨厂智能问答/自动下单/无依据生成</span>`);
   }
 }
 function closeCopilot() { document.getElementById('copilotDrawer').classList.add('hidden'); }
@@ -1295,9 +1456,19 @@ function sendChat() {
 
 function processAIResponse(text) {
   let response = '';
-  // Command Center 统一响应结构
-  const cmdCenter = (analysis, problemCards, recommendation, actions) => {
+  // Command Center 统一响应结构 (V3.1 加 L级+数据来源)
+  const cmdCenter = (analysis, problemCards, recommendation, actions, opts={}) => {
+    const lvl = opts.lvl || 'L1';
+    const src = opts.src || 'M0/M1/M5';
+    const confSrc = opts.confSrc || '基于阈值规则触发(本期不做统计学习)';
     return `
+      <div class="p-2 bg-ink-50/60 border border-ink-200 rounded-lg mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+        ${lvlBadge(lvl)}<span class="text-ink-500">${AI_LEVELS[lvl].desc}</span>
+        <span class="text-ink-300">·</span>
+        <span class="text-ink-500">数据:<span class="text-ink-700 font-mono">${src}</span></span>
+        <span class="text-ink-300">·</span>
+        <span class="text-ink-500">置信度来源:<span class="text-ink-700">${confSrc}</span></span>
+      </div>
       <div class="p-3 bg-gradient-to-r from-ai-50 to-brand-50 border-l-4 border-ai-500 rounded-r-lg mb-3">
         <div class="text-[10px] font-bold text-ai-700 mb-1">📊 分析结果</div>
         <div class="text-[11px] text-ink-700 leading-relaxed">${analysis}</div>
@@ -1323,29 +1494,30 @@ function processAIResponse(text) {
 
   if (text.includes('延期') || text.includes('风险')) {
     response = cmdCenter(
-      `我分析了所有14个在制订单，发现<span class="text-danger-600 font-semibold">3个订单存在延期风险</span>，预计总影响 ¥41.4万营收。`,
+      `我扫描了所有在制订单(数据源:M3排产计划 vs M0实际报工),发现<span class="text-danger-600 font-semibold">3个订单的排产计划与实际进度偏差超过阈值20%</span>,标记为延期风险。预计总影响 ¥41.4万营收。`,
       `
         <div class="p-2.5 bg-danger-50 border-l-2 border-danger-500 rounded">
           <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-danger-500 text-white rounded font-mono font-bold">高</span><div class="text-[12px] font-semibold text-danger-700">🔴 HT-2026-0615-001 · 延期2天</div></div>
-          <div class="text-[11px] text-ink-600">根因：面料延迟到货 + 客户临时提前交期 · 置信度88%</div>
+          <div class="text-[11px] text-ink-600">关联线索:面料待料 + 客户提前交期(仅供参考,最终根因由人工判定)</div>
         </div>
         <div class="p-2.5 bg-warn-50 border-l-2 border-warn-500 rounded">
           <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-warn-500 text-white rounded font-mono font-bold">中</span><div class="text-[12px] font-semibold text-warn-700">🟠 HT-2026-0618-003 · 延期1天</div></div>
-          <div class="text-[11px] text-ink-600">根因：缝制B组效率下降 · 置信度76%</div>
+          <div class="text-[11px] text-ink-600">关联线索:缝制B组效率连续2天低于基准线14%</div>
         </div>
         <div class="p-2.5 bg-warn-50 border-l-2 border-warn-500 rounded">
           <div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 bg-warn-500 text-white rounded font-mono font-bold">中</span><div class="text-[12px] font-semibold text-warn-700">🟠 HT-2026-0620-005 · 预计延期</div></div>
-          <div class="text-[11px] text-ink-600">根因：外协未回厂 · 置信度72%</div>
+          <div class="text-[11px] text-ink-600">关联线索:外协件未回厂,预计3天后到</div>
         </div>`,
-      recBlock('从订单HT-005调剂面料（零成本方案）', '¥0', '追回2天延期，不影响HT-005', 96, 96),
-      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>立即执行</button>
+      recBlock('从订单HT-005调剂面料(零成本方案)', '¥0', '追回2天延期,不影响HT-005', 96, 96),
+      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳建议(L2·人工确认)</button>
        <button onclick="navigate('mission-center')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>查看所有方案</button>
        <button onclick="navigate('alerts')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-route mr-1"></i>查看风险中心</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`,
+      { lvl:'L2', src:'M0 报工 / M3 排产 / M5 库存', confSrc:'基于阈值规则(计划vs实际偏差>20%)' }
     );
   } else if (text.includes('短缺') || text.includes('库存')) {
     response = cmdCenter(
-      `我预测了未来7天的物料消耗，<span class="text-danger-600 font-semibold">发现2项物料将短缺</span>，影响3个订单。`,
+      `扫描 M5 库存表,基于"安全库存线"和"近7天平均消耗"规则,<span class="text-danger-600 font-semibold">发现2项物料低于安全线且消耗速度>补充速度</span>,影响3个订单。`,
       `
         <div class="p-2.5 bg-danger-50 border-l-2 border-danger-500 rounded">
           <div class="flex items-center justify-between"><div class="text-[12px] font-semibold text-ink-900">黑色涤纶面料</div><span class="text-[10px] text-danger-600 font-mono">预计周三断货</span></div>
@@ -1355,118 +1527,134 @@ function processAIResponse(text) {
           <div class="flex items-center justify-between"><div class="text-[12px] font-semibold text-ink-900">4#金属拉链</div><span class="text-[10px] text-warn-600 font-mono">预计周五短缺</span></div>
           <div class="text-[11px] text-ink-600 mt-1">当前500条 / 安全800条 / 周消耗350条</div>
         </div>`,
-      recBlock('紧急采购 100m 黑色涤纶面料', '+¥2,850', '2天到货，库存恢复至220m', 92, 92),
-      `<button onclick="quickApprove('MSN-20260629-001')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>立即生成采购单</button>
+      recBlock('紧急采购 100m 黑色涤纶面料', '+¥2,850', '2天到货,库存恢复至220m', 92, 92),
+      `<button onclick="quickApprove('MSN-20260629-001')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳建议(L2·转采购单)</button>
        <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改方案</button>
        <button onclick="navigate('inventory')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>查看库存</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">忽略</button>`,
+      { lvl:'L2', src:'M5 库存 / M2 工艺BOM / 供应商档案', confSrc:'阈值规则+近7天均值(非预测模型)' }
     );
   } else if (text.includes('采购计划') || text.includes('采购')) {
     response = cmdCenter(
-      `已为您生成本周采购计划，覆盖未来7天物料需求。<span class="font-bold">3个采购单</span>，金额 <span class="font-bold text-ai-600">¥18,250</span>。`,
+      `基于 M5 库存预测 + M7 在途采购 + M3 排产需求,生成本周采购建议草案。<span class="font-bold">3个采购单</span>,金额 <span class="font-bold text-ai-600">¥18,250</span>。`,
       `
         <div class="grid grid-cols-3 gap-2 text-center mb-2">
           <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">3</div><div class="text-[10px] text-ink-500">采购单</div></div>
           <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">¥18,250</div><div class="text-[10px] text-ink-500">总金额</div></div>
-          <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">5天</div><div class="text-[10px] text-ink-500">平均交期</div></div>
+          <div class="p-2 bg-ai-50 rounded"><div class="text-lg font-bold text-ai-600">5天</div><div class="text-[10px] text-ink-500">平均交期(供应商档案)</div></div>
         </div>
         <div class="space-y-1 text-[11px]">
           <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>① 黑色涤纶面料 100m</span><span class="font-mono text-ink-500">¥2,850</span></div>
           <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>② 4#金属拉链 500条</span><span class="font-mono text-ink-500">¥1,400</span></div>
           <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>③ 印花工艺·碎花 200m</span><span class="font-mono text-ink-500">¥9,000</span></div>
         </div>`,
-      recBlock('自动生成采购单并发起审批', '¥18,250', '3-5天全部到货', 88, 90),
-      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>一键生成</button>
+      recBlock('生成采购单草案并发起审批', '¥18,250', '3-5天全部到货(基于供应商档案平均交期)', 88, 90),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳·转采购单(L2)</button>
        <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-download mr-1"></i>导出</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-download mr-1"></i>导出</button>`,
+      { lvl:'L2', src:'M5 库存 / M3 排产 / M7 供应商档案', confSrc:'建议草案,金额基于历史单价' }
     );
   } else if (text.includes('利润') || text.includes('下降')) {
     response = cmdCenter(
-      `已分析本月利润变化。📉 本月毛利率 <span class="font-bold">28.3%</span>（上月 32.1%），<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span>，预计影响净利润 <span class="font-bold text-danger-600">-¥18.5万</span>。`,
+      `扫描 M8 财务本月数据 vs 上月,毛利率 <span class="font-bold">28.3%</span>(上月 32.1%),<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span>。已拆解为4项成本项变动(各数据可点击追溯到具体订单/批次)。`,
       `
         <div class="space-y-1.5 text-[11px]">
           <div class="flex items-center justify-between p-1.5 bg-danger-50/50 rounded"><span>① 面料成本 ↑5.2%</span><span class="text-danger-600 font-mono font-bold">-2.1%</span></div>
           <div class="flex items-center justify-between p-1.5 bg-danger-50/50 rounded"><span>② 外协费用 ↑8%</span><span class="text-danger-600 font-mono font-bold">-1.5%</span></div>
           <div class="flex items-center justify-between p-1.5 bg-warn-50/50 rounded"><span>③ 返工成本 ↑12%</span><span class="text-danger-600 font-mono font-bold">-0.8%</span></div>
           <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded"><span>④ 人工效率 ↓3%</span><span class="text-danger-600 font-mono font-bold">-0.4%</span></div>
+        </div>
+        <div class="text-[10px] text-ink-500 mt-2 p-1.5 bg-amber-50/50 border border-amber-200 rounded">
+          <i class="fas fa-circle-info text-amber-500 mr-0.5"></i>以上为成本项变动对毛利率的归因分解,因果判断(如"外协增加是否导致毛利率下降")需人工结合业务背景确认
         </div>`,
       recBlock('执行组合优化方案', '+¥32,000/月', '下月起毛利率恢复至31%+', 90, 88),
-      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>执行优化方案</button>
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳(L2·转任务)</button>
        <button onclick="navigate('finance')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-chart-line mr-1"></i>详细分析</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-file-powerpoint mr-1"></i>生成PPT</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-file-powerpoint mr-1"></i>生成报告</button>`,
+      { lvl:'L2', src:'M8 财务 / M1 订单 / M5 物料 / M0 工时', confSrc:'成本项变动归因,非因果链建模' }
     );
   } else if (text.includes('订单HT-2026-0615-001') || text.includes('根因')) {
     response = cmdCenter(
-      `正在因果分析订单 <span class="font-mono font-semibold">HT-2026-0615-001</span> 的延期根因。AI识别出6层因果链，找到3个可干预节点。`,
+      `正在调取订单 <span class="font-mono font-semibold">HT-2026-0615-001</span> 相关的时序事件(M0报工/M3排产/M5库存/M1订单变更),整理出6条时间关联线索。`,
       `
         <div class="p-3 bg-ink-50 rounded-lg">
           <div class="text-[11px] space-y-1 text-ink-600">
-            <div>① 客户优品服饰上周三临时提前交期（原7/15 → 7/8）</div>
+            <div>① 客户优品服饰上周三临时提前交期(原7/15 → 7/8)</div>
             <div class="pl-4 text-ink-400">↓</div>
             <div>② 领料量超出原计划 40%</div>
             <div class="pl-4 text-ink-400">↓</div>
-            <div>③ 黑色涤纶面料库存快速消耗（300m → 120m）</div>
+            <div>③ 黑色涤纶面料库存快速消耗(300m → 120m)</div>
             <div class="pl-4 text-ink-400">↓</div>
             <div>④ 采购周期未调整</div>
             <div class="pl-4 text-ink-400">↓</div>
-            <div>⑤ 库存低于安全线，生产待料2天</div>
+            <div>⑤ 库存低于安全线,生产待料2天</div>
             <div class="pl-4 text-danger-400 font-semibold">↓</div>
             <div class="text-danger-600 font-semibold">⑥ 预计延期3天</div>
           </div>
+        </div>
+        <div class="text-[10px] text-ink-500 mt-2 p-1.5 bg-amber-50/50 border border-amber-200 rounded">
+          <i class="fas fa-circle-info text-amber-500 mr-0.5"></i>以上为时间相关的事件关联,非严格的因果链。哪个是真正"根因"由计划员/业务员结合客户沟通判断。
         </div>`,
-      recBlock('从订单HT-005调剂 200m 面料', '¥0', '追回2天延期，客户满意度影响<5%', 96, 96),
-      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>执行方案②</button>
+      recBlock('从订单HT-005调剂 200m 面料', '¥0', '追回2天延期,客户满意度影响<5%', 96, 96),
+      `<button onclick="quickApprove('MSN-20260629-002')" class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳·转执行</button>
        <button onclick="navigate('mission-center')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-list mr-1"></i>所有方案</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-question-circle mr-1"></i>为何这样建议？</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-question-circle mr-1"></i>为何这样建议？</button>`,
+      { lvl:'L2', src:'M1 订单 / M3 排产 / M0 报工 / M5 库存', confSrc:'时序事件关联,非因果推理' }
     );
   } else if (text.includes('创建') || text.includes('优品') || text.includes('300件')) {
     response = cmdCenter(
-      `✅ 已解析您的输入。检测到客户DNA匹配度 96%，工艺DNA匹配度 98%，可全自动创建订单。`,
+      `已解析您的输入(基于客户档案字段匹配+M2款式DNA检索):客户<span class="font-semibold">广州优品服饰</span>,匹配款式DNA-2026-003运动T恤。预填订单草案待您确认。`,
       `
         <div class="space-y-2 text-[11px]">
           <div class="p-2 bg-ai-50 border border-ai-200 rounded-lg">
-            <div class="text-ai-700 font-semibold mb-1">📝 订单解析</div>
+            <div class="text-ai-700 font-semibold mb-1">📝 订单草案(预填字段)</div>
             <div class="space-y-1 text-ink-700">
-              <div>• 客户：<span class="font-semibold">广州优品服饰</span> (DNA 96)</div>
-              <div>• 产品：黑色T恤 · 300件</div>
-              <div>• 交期：<span class="font-mono">2026-07-20</span>（22天）</div>
-              <div>• 工艺：<span class="text-ai-600 font-semibold">DNA-2026-003 运动T恤</span>（98%）</div>
-              <div>• 尺码：S/M/L/XL/XXL = 30/80/110/60/20</div>
+              <div>• 客户:<span class="font-semibold">广州优品服饰</span></div>
+              <div>• 产品:黑色T恤 · 300件</div>
+              <div>• 交期:<span class="font-mono">2026-07-20</span>(22天)</div>
+              <div>• 推荐工艺:<span class="text-ai-600 font-semibold">DNA-2026-003 运动T恤</span>(基于M2历史款式)</div>
+              <div>• 尺码建议:S/M/L/XL/XXL = 30/80/110/60/20 (来自该客户最近3次订单的尺码分布)</div>
             </div>
           </div>
           <div class="p-2 bg-white border border-ink-200 rounded">
-            <div class="font-semibold text-ink-800 mb-1">📦 BOM清单</div>
+            <div class="font-semibold text-ink-800 mb-1">📦 BOM清单(预生成)</div>
             <div class="space-y-0.5 text-ink-600">
               <div class="flex justify-between"><span>• 黑色涤纶面料 165m</span><span class="text-danger-600">缺口45m ⚠️</span></div>
               <div class="flex justify-between"><span>• 32支精梳棉 8m</span><span class="text-success-600">充足</span></div>
             </div>
           </div>
         </div>`,
-      recBlock('自动创建订单 + BOM + 排产 + 采购需求', '+¥8,250', '预估利润¥4,950 (37.5%)', 95, 94),
-      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>确认创建</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">取消</button>`
+      recBlock('创建订单(草案)+触发BOM+采购需求', '+¥8,250', '预估利润¥4,950 (37.5%)', 95, 94),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳·创建订单(L2)</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-pen mr-1"></i>修改字段</button>
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50 text-ink-500">取消</button>`,
+      { lvl:'L2', src:'客户档案 / M2 款式DNA / M5 库存', confSrc:'字段基于历史匹配,非NLP理解' }
     );
   } else if (text.includes('排产') || text.includes('排程')) {
     response = cmdCenter(
-      `已分析14个订单 + BOM + 产能 + 物料齐套情况。AI生成的30天排产方案已通过模拟验证。`,
+      `基于 M3 规则+启发式排产(最早交期优先 + 产能负载均衡),生成14个订单的30天排产草案。算法输出"可行解",非运筹优化"最优解"。`,
       `
         <div class="grid grid-cols-2 gap-2 text-[11px]">
-          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">排产订单</div><div class="text-lg font-bold text-ink-900">14个（含3个紧急）</div></div>
-          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">设备利用率</div><div class="text-lg font-bold text-success-600">87.3% ↑12%</div></div>
-          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">预计节省工时</div><div class="text-lg font-bold text-success-600">142小时</div></div>
-          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">延期风险</div><div class="text-lg font-bold text-danger-600">2单（已识别）</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">排产订单</div><div class="text-lg font-bold text-ink-900">14个(含3个紧急)</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">设备利用率(预估)</div><div class="text-lg font-bold text-success-600">87.3%</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">已识别延期风险</div><div class="text-lg font-bold text-danger-600">2单</div></div>
+          <div class="p-2 bg-ink-50 rounded"><div class="text-ink-500">齐套问题订单</div><div class="text-lg font-bold text-warn-600">1单</div></div>
+        </div>
+        <div class="text-[10px] text-ink-500 mt-2 p-1.5 bg-amber-50/50 border border-amber-200 rounded">
+          <i class="fas fa-circle-info text-amber-500 mr-0.5"></i>设备利用率、节省工时等为规则推演估算,实际执行以 M0 报工为准
         </div>`,
-      recBlock('发布执行排产方案', '0', '设备利用率+12%，延期风险已纳入应对', 92, 91),
-      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-bolt mr-1"></i>发布执行</button>
+      recBlock('采纳排产草案', '0', '已纳入2单延期风险应对', 92, 91),
+      `<button class="quick-approve-btn text-[10px] px-3 py-1.5 rounded font-medium"><i class="fas fa-check mr-1"></i>采纳·发布(L2)</button>
        <button onclick="navigate('production')" class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-chart-gantt mr-1"></i>查看甘特图</button>
-       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-sliders mr-1"></i>调整参数</button>`
+       <button class="text-[10px] px-3 py-1.5 border border-ink-300 rounded hover:bg-ink-50"><i class="fas fa-sliders mr-1"></i>调整参数</button>`,
+      { lvl:'L2', src:'M1 订单 / M3 排产 / M5 库存 / M4 产能', confSrc:'规则+启发式(非运筹优化)' }
     );
   } else {
-    response = `我理解您的需求："${text}"<br/><br/>
-      正在跨模块分析数据...<br/><br/>
+    response = `收到您的输入。我先尝试匹配意图(规则化识别) —— " <span class="font-semibold">${text}</span> "<br/><br/>
+      ${lvlBadge('L1')}<span class="text-[10px] text-ink-500">本期能力:规则化意图识别 + 结构化查询</span><br/>
+      <span class="text-[10px] text-amber-600">大模型+RAG企业知识库列入P3,需P0-P2先累积真实数据</span><br/><br/>
       <div class="mt-2 p-2 bg-ai-50 rounded text-[11px] text-ink-700">
-        💡 我可以帮您：<br/>
+        💡 我可以帮您(基于已积累数据):<br/>
         • <button class="text-ai-600 hover:underline" onclick="sendQuick('我有哪些订单有延期风险？')">查询订单风险</button><br/>
         • <button class="text-ai-600 hover:underline" onclick="sendQuick('未来7天哪些物料会短缺？')">分析物料需求</button><br/>
         • <button class="text-ai-600 hover:underline" onclick="sendQuick('帮我生成采购计划')">生成采购计划</button><br/>
@@ -1478,6 +1666,196 @@ function processAIResponse(text) {
 }
 
 /* ============== 7. 页面渲染 ============== */
+/* ============== V3.1 新增 M0 车间数据采集层(PRD §M0 · P0基础设施) ============== */
+function renderDataCollection() {
+  // 模拟弱网/离线缓存队列
+  const collectionStats = [
+    {n:'今日报工条数', v:'1,247', d:'↑ 8%', c:'success', i:'fa-list-check'},
+    {n:'录入完整率', v:'92.4%', d:'目标≥90%', c:'success', i:'fa-bullseye'},
+    {n:'离线缓存待同步', v:'14', d:'弱网环境', c:'warn', i:'fa-cloud-arrow-up'},
+    {n:'录入平均耗时', v:'7.2s', d:'目标≤10s', c:'success', i:'fa-stopwatch'}
+  ];
+  // 4个采集入口
+  const entryPoints = [
+    {n:'工序报工', d:'扫码/选工序+数量', icon:'fa-qrcode', color:'cyan', hot:true, items:[
+      {t:'裁剪', c:312},
+      {t:'缝制', c:687},
+      {t:'后整', c:189},
+      {t:'包装', c:59}
+    ]},
+    {n:'物料出入库', d:'扫码物料+数量+方向', icon:'fa-dolly', color:'emerald', items:[
+      {t:'入库', c:23},
+      {t:'出库', c:41},
+      {t:'调拨', c:5}
+    ]},
+    {n:'质检结果录入', d:'扫码工单+合格数+缺陷项', icon:'fa-shield-halved', color:'rose', items:[
+      {t:'一次合格', c:106},
+      {t:'返工', c:8},
+      {t:'报废', c:2}
+    ]},
+    {n:'设备状态上报', d:'扫码设备+故障描述', icon:'fa-gauge-high', color:'amber', items:[
+      {t:'正常', c:18},
+      {t:'保养', c:3},
+      {t:'故障', c:1}
+    ]}
+  ];
+  // 最近录入流水(模拟)
+  const recentLogs = [
+    {time:'14:38:21', worker:'王秀英 (缝制A组)', action:'工序报工', detail:'HT-0618-002 运动T恤 锁边工序 数量 35件', status:'已同步'},
+    {time:'14:37:55', worker:'李大壮 (缝制B组)', action:'工序报工', detail:'HT-0615-001 法式茶歇裙 拼缝工序 数量 28件', status:'已同步'},
+    {time:'14:36:12', worker:'质检员-陈芳', action:'质检录入', detail:'HT-0620-005 羽绒服 中检 合格45/退1', status:'已同步'},
+    {time:'14:35:30', worker:'仓管-赵志强', action:'出库登记', detail:'黑色涤纶面料 200m → 缝制B组', status:'已同步'},
+    {time:'14:34:18', worker:'裁剪-孙国良', action:'工序报工', detail:'HT-0620-004 汉服 裁片完成 数量 200片', status:'已同步'},
+    {time:'14:32:47', worker:'设备-张师傅', action:'设备状态', detail:'缝纫机 #07 张力异常,已挂维修单', status:'已同步', warn:true},
+    {time:'14:30:05', worker:'王秀英 (缝制A组)', action:'工序报工', detail:'HT-0618-002 运动T恤 锁边工序 数量 40件', status:'离线缓存'},
+    {time:'14:28:33', worker:'质检员-陈芳', action:'质检录入', detail:'HT-0625-006 碎花连衣裙 末检 合格32', status:'离线缓存'}
+  ];
+
+  document.getElementById('pageContainer').innerHTML = `
+    <div class="space-y-5 animate-fade-in">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
+            <i class="fas fa-mobile-screen-button text-cyan-500"></i> M0 车间数据采集
+            <span class="px-2 py-0.5 bg-cyan-500 text-white text-[10px] rounded-full font-bold">P0基础设施</span>
+          </h1>
+          <p class="text-xs text-ink-500 mt-1">P0 阶段地基模块 · 没有这里,所有AI能力都是空中楼阁</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50" onclick="showModal('📱 移动端预览','<div class=\\'space-y-3 text-xs\\'><div class=\\'aspect-[9/16] max-w-[240px] mx-auto bg-gradient-to-br from-ink-900 to-ink-800 rounded-2xl p-3 text-white\\'><div class=\\'text-center text-ink-300 mb-2\\'>🔒 锁屏</div><div class=\\'text-center text-2xl font-bold\\'>14:38</div><div class=\\'text-center text-ink-300\\'>车间扫码报工</div></div><div class=\\'text-ink-500 text-center\\'>移动端App/小程序形态 · 工人扫码后直接选工序+数字键盘输入数量</div></div>','<button onclick=\\'this.closest(\\\'.fixed\\\').remove()\\\' class=\\'ai-gradient text-white px-4 py-2 rounded-lg text-sm\\'>了解</button>')">📱 移动端预览</button>
+          <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-soft">
+            <i class="fas fa-cog"></i> 采集规则配置
+          </button>
+        </div>
+      </div>
+
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-cyan-50/50 border border-cyan-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">结构化存储 + 基础校验(单次报工≤剩余量)</span>
+        <div class="ml-auto">${srcTag(['M0'], {mock:true})}</div>
+      </div>
+
+      <!-- 重要性说明 -->
+      <div class="p-3 bg-gradient-to-r from-cyan-50 to-sky-50 border-l-4 border-cyan-500 rounded-r-lg flex items-start gap-2.5">
+        <i class="fas fa-circle-info text-cyan-600 text-base mt-0.5"></i>
+        <div class="text-[11px] text-ink-700 leading-relaxed">
+          <div class="font-bold text-cyan-700 mb-1">为什么这是 P0 优先级最高的模块?</div>
+          行业真实痛点:<span class="font-semibold">服装代工厂数字化转型失败案例 70% 出在数据基础薄弱</span>。所有 AI 能力(实时监控、预测预警、根因分析)都依赖源源不断的高质量数据 — 没有 M0,M1-M6 都无法跑出真实数据。本模块的验收标准:试点车间连续两周<span class="font-semibold">录入完整率 ≥ 90%</span>,单次操作<span class="font-semibold">≤10秒</span>。
+        </div>
+      </div>
+
+      <!-- 核心指标 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${collectionStats.map(s => `
+          <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <div class="w-9 h-9 rounded-lg bg-${s.c}-50 text-${s.c}-600 flex items-center justify-center">
+                <i class="fas ${s.i}"></i>
+              </div>
+              <span class="text-[10px] text-${s.c}-600 font-medium">${s.d}</span>
+            </div>
+            <div class="text-2xl font-bold text-ink-900 font-mono">${s.v}</div>
+            <div class="text-[10px] text-ink-500 mt-0.5">${s.n}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- 4个采集入口 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+        <h2 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+          <i class="fas fa-mobile-screen text-cyan-500"></i> 4 个移动端采集入口
+          <span class="text-[10px] font-normal text-ink-500">弱网/离线可缓存,联网后自动同步</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          ${entryPoints.map(e => `
+            <div class="p-4 rounded-xl border-2 ${e.hot?'border-cyan-400 bg-cyan-50/30':'border-ink-200 bg-white'} hover:shadow-soft cursor-pointer card-hover transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-${e.color}-500 text-white flex items-center justify-center text-base">
+                  <i class="fas ${e.icon}"></i>
+                </div>
+                ${e.hot ? '<span class="text-[9px] px-1.5 py-0.5 bg-danger-500 text-white rounded-full font-bold">最频繁</span>' : ''}
+              </div>
+              <div class="text-sm font-bold text-ink-900 mb-1">${e.n}</div>
+              <div class="text-[10px] text-ink-500 mb-2">${e.d}</div>
+              <div class="grid grid-cols-${e.items.length} gap-1 text-center">
+                ${e.items.map(i => `<div class="p-1 bg-ink-50 rounded"><div class="text-[9px] text-ink-500">${i.t}</div><div class="text-sm font-bold font-mono text-${e.color}-600">${i.c}</div></div>`).join('')}
+              </div>
+              <button class="mt-3 w-full text-[10px] py-1.5 ai-gradient text-white rounded font-medium">
+                <i class="fas fa-qrcode mr-1"></i>开始采集
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 移动端采集流程示意 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+          <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            <i class="fas fa-stream text-cyan-500"></i> 实时录入流水
+            <span class="text-[10px] font-normal text-ink-500">最近 30 分钟</span>
+            <span class="ml-auto flex items-center gap-1.5 text-[10px] text-success-600"><span class="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse"></span>实时</span>
+          </h3>
+          <div class="space-y-1.5 max-h-96 overflow-y-auto scrollbar-thin">
+            ${recentLogs.map(l => `
+              <div class="p-2.5 border ${l.warn?'border-warn-300 bg-warn-50/30':l.status==='离线缓存'?'border-amber-200 bg-amber-50/20':'border-ink-100'} rounded-lg">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-mono text-[10px] text-ink-500">${l.time}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 bg-cyan-50 text-cyan-700 rounded">${l.action}</span>
+                  <span class="text-[10px] text-ink-500 flex-1 truncate">${l.worker}</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-medium ${l.status==='已同步'?'bg-success-100 text-success-700':'bg-amber-100 text-amber-700'}">${l.status}</span>
+                </div>
+                <div class="text-[11px] text-ink-700">${l.detail}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-ink-50 to-slate-50 rounded-2xl border border-ink-200 p-5">
+          <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            <i class="fas fa-bullseye text-cyan-500"></i> P0 验收标准
+          </h3>
+          <div class="space-y-3">
+            <div class="p-3 bg-white rounded-lg border border-success-200">
+              <div class="text-[10px] text-success-600 font-semibold mb-1">✅ 验收指标 1</div>
+              <div class="text-[11px] text-ink-700">单次报工操作 <span class="font-bold font-mono">≤ 10秒</span></div>
+              <div class="text-[10px] text-ink-500 mt-0.5">实测: 7.2s ✓ (扫码3s+选工序2s+输入2s+确认0.2s)</div>
+            </div>
+            <div class="p-3 bg-white rounded-lg border border-success-200">
+              <div class="text-[10px] text-success-600 font-semibold mb-1">✅ 验收指标 2</div>
+              <div class="text-[11px] text-ink-700">试点车间 <span class="font-bold font-mono">连续两周录入完整率 ≥ 90%</span></div>
+              <div class="text-[10px] text-ink-500 mt-0.5">实测: 92.4% ✓ (含节假日)</div>
+            </div>
+            <div class="p-3 bg-white rounded-lg border border-ink-200">
+              <div class="text-[10px] text-ink-600 font-semibold mb-1">📊 地基健康度</div>
+              <div class="text-[11px] text-ink-700">录入偏差率 = 报工数 vs 实际盘点的差</div>
+              <div class="text-[10px] text-ink-500 mt-0.5">本期:<span class="font-mono font-bold">2.1%</span> · 决定 AI 层数据基础是否可靠</div>
+            </div>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div class="text-[10px] text-amber-700 font-semibold mb-1">⚠️ 风险提示</div>
+              <div class="text-[10px] text-ink-600 leading-relaxed">一线工人对录入操作抵触是行业普遍现象 · 缓解策略:仅扫码不需打字+与计件工资激励机制绑定+不单纯增加考核</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 闭环四要素 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+        <h3 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+          <i class="fas fa-arrows-rotate text-cyan-500"></i> 闭环四要素 — M0 自身如何"验证地基是否可靠"
+        </h3>
+        ${loop4({
+          input:{n:'现场操作', d:'扫码/数字键盘/语音 → 工人/仓管/质检员'},
+          logic:{n:'L0 结构化存储', d:'仅做基础校验(如单次报工不能超工单剩余量),无判断逻辑'},
+          output:{n:'实时工序进度/物料流水/质检原始记录', d:'可被 M3/M4/M5/M6 实时读取'},
+          feedback:{n:'录入偏差率监控', d:'定期抽样比对报工 vs 实际盘点/交付,偏差率是地基可靠性核心指标'}
+        })}
+      </div>
+    </div>
+  `;
+}
+
 const pages = {
   home: renderTodayMission,
   'mission-center': renderMissionCenter,
@@ -1496,8 +1874,61 @@ const pages = {
   alerts: renderAlerts,
   'ai-decisions': renderAIDecisions,
   evolution: renderEvolution,
-  org: renderOrg
+  org: renderOrg,
+  'data-collection': renderDataCollection
 };
+
+/* ============== V3.1 优化:AI分级 / 来源 / 闭环 工具函数(PRD §2.1 §2.2) ============== */
+const AI_LEVELS = {
+  L0: { name:'L0 数字化记录', desc:'仅做结构化存储与基础校验,无判断逻辑(数据采集/出入库登记)' },
+  L1: { name:'L1 规则提示', desc:'预设阈值/规则触发提醒,逻辑可解释可配置(库存预警/工序效率偏差)' },
+  L2: { name:'L2 建议+人工确认', desc:'系统生成建议方案并附依据,人工采纳/修改/拒绝后才执行(本期默认)' },
+  L3: { name:'L3 自动执行+事后可撤销', desc:'影响小、规则确定的场景自动执行,需完整操作日志与撤销入口' },
+  L4: { name:'L4 完全自主决策', desc:'本期不做,资金/排产/物料变更类禁止自动执行' }
+};
+const SOURCES = {
+  'M0':{n:'M0 车间采集',i:'fa-mobile-screen',c:'text-cyan-600'},
+  '人工':{n:'人工录入',i:'fa-user-pen',c:'text-ink-500'},
+  '订单':{n:'历史订单',i:'fa-file-invoice',c:'text-brand-600'},
+  'DNA':{n:'M2 款式DNA库',i:'fa-dna',c:'text-ai-600'},
+  'M5':{n:'M5 库存',i:'fa-boxes-stacked',c:'text-emerald-600'},
+  'M7':{n:'M7 采购',i:'fa-cart-shopping',c:'text-amber-600'},
+  'M8':{n:'M8 财务',i:'fa-coins',c:'text-emerald-600'},
+  'mock':{n:'演示数据',i:'fa-flask',c:'text-orange-500'}
+};
+// L级徽章: lvlBadge('L2')  →  返回带tooltip的HTML
+function lvlBadge(level, opts={}) {
+  const meta = AI_LEVELS[level];
+  if (!meta) return '';
+  const dis = opts.disabled ? ' lvl-L4-disabled' : '';
+  const tip = `${meta.name} · ${meta.desc}`;
+  return `<span class="lvl-badge lvl-${level}${dis}" data-tip="${tip.replace(/"/g,'&quot;')}"><span class="lvl-dot"></span>${level}</span>`;
+}
+// 数据来源徽章: srcTag(['M0','DNA'], {mock:true}) → "📱 M0采集 + 🧬 DNA + 🧪 演示数据"
+function srcTag(arr, opts={}) {
+  if (!arr || !arr.length) return '';
+  const parts = arr.map(k => {
+    const s = SOURCES[k];
+    if (!s) return k;
+    return `<span class="${s.c}"><i class="fas ${s.i}"></i> ${s.n}</span>`;
+  });
+  let html = parts.join(' <span class="text-ink-300">·</span> ');
+  if (opts.mock) html = `<span class="src-tag src-mock"><i class="fas fa-flask"></i>演示数据</span> ` + html;
+  return `<div class="src-tag flex flex-wrap items-center gap-x-2 gap-y-0.5">${html}</div>`;
+}
+// 闭环四要素: loop4({input,logic,output,feedback})
+function loop4(o) {
+  return `<div class="loop-4">
+    <div class="loop-step"><div class="loop-step-num">① 输入</div><div class="loop-step-name">${o.input?.n||'-'}</div><div class="loop-step-desc">${o.input?.d||''}</div></div>
+    <div class="loop-step"><div class="loop-step-num">② 处理</div><div class="loop-step-name">${o.logic?.n||'-'}</div><div class="loop-step-desc">${o.logic?.d||''}</div></div>
+    <div class="loop-step"><div class="loop-step-num">③ 输出</div><div class="loop-step-name">${o.output?.n||'-'}</div><div class="loop-step-desc">${o.output?.d||''}</div></div>
+    <div class="loop-step"><div class="loop-step-num">④ 回流</div><div class="loop-step-name">${o.feedback?.n||'-'}</div><div class="loop-step-desc">${o.feedback?.d||''}</div></div>
+  </div>`;
+}
+// 渲染演示数据水印(全局固定右下)
+function demoWatermark() {
+  return `<div class="demo-watermark"><i class="fas fa-flask"></i>演示数据 · 真实落地需POC验证</div>`;
+}
 
 function renderPage(page) {
   const fn = pages[page];
@@ -1549,14 +1980,17 @@ function renderTodayMission() {
   const renderActiveCard = (m, isPending=true) => {
     const prioColor = m.priority === 'P0' ? 'danger' : m.priority === 'P1' ? 'warn' : 'brand';
     return `
-    <div class="mission-card bg-white rounded-xl border border-ink-200 overflow-hidden">
+    <div class="mission-card bg-white rounded-xl border border-ink-200 overflow-hidden cursor-pointer hover:border-${prioColor}-300 transition-all group" onclick="jumpToMission('pending', '${m.id}')">
       <div class="p-3.5 border-b border-ink-100 bg-gradient-to-r from-${prioColor}-50/40 to-transparent">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-${prioColor}-500 text-white">${m.priority||'P1'}</span>
             <div class="text-[13px] font-semibold text-ink-900 truncate">${m.title}</div>
           </div>
-          ${aiBadge()}
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${aiBadge()}
+            <i class="fas fa-arrow-up-right-from-square text-[9px] text-ink-300 group-hover:text-${prioColor}-500 transition-colors"></i>
+          </div>
         </div>
         <div class="flex items-center justify-between text-[11px] text-ink-600">
           <span class="flex items-center gap-1.5">
@@ -1595,17 +2029,15 @@ function renderTodayMission() {
           </div>
         </div>
 
-        <!-- 操作按钮 -->
-        <div class="flex items-center gap-2">
+        <!-- 操作按钮(阻止冒泡,不触发卡片点击) -->
+        <div class="flex items-center gap-2" onclick="event.stopPropagation()">
           <button onclick="quickApprove('${m.id}')" class="quick-approve-btn text-[11px] px-3 py-1.5 rounded-lg font-medium flex items-center gap-1">
             <i class="fas fa-check-circle text-[10px]"></i> 一键批准
           </button>
           <button onclick="viewAlternatives('${m.id}')" class="text-[11px] px-3 py-1.5 border border-ink-300 rounded-lg hover:bg-ink-50 text-ink-700">
             其它方案(${m.alternativeSolutions?m.alternativeSolutions.length:0})
           </button>
-          <button onclick="viewMissionDetail('${m.id}')" class="text-[11px] px-3 py-1.5 text-ai-600 hover:text-ai-700 ml-auto">
-            详情 →
-          </button>
+          <span class="text-[10px] text-ink-400 ml-auto">点击卡片查看详情</span>
         </div>
       </div>
     </div>`;
@@ -1614,7 +2046,7 @@ function renderTodayMission() {
   // 执行中任务卡（简版）
   const renderExecutingCard = (m) => {
     return `
-    <div class="mission-card bg-white rounded-xl border-l-4 border-l-ai-500 border border-ink-200 overflow-hidden exec-card-pulse">
+    <div class="mission-card bg-white rounded-xl border-l-4 border-l-ai-500 border border-ink-200 overflow-hidden exec-card-pulse cursor-pointer hover:border-ai-300 transition-all group" onclick="jumpToMission('executing', '${m.id}')">
       <div class="p-3.5">
         <div class="flex items-start justify-between mb-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -1626,10 +2058,13 @@ function renderTodayMission() {
               <div class="text-[10px] text-ink-500">${m.agent} · ${m.id.slice(-9)}</div>
             </div>
           </div>
-          <span class="text-[10px] px-2 py-0.5 bg-ai-100 text-ai-700 rounded-full flex items-center gap-1">
-            <span class="w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
-            ${m.currentStep}中
-          </span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="text-[10px] px-2 py-0.5 bg-ai-100 text-ai-700 rounded-full flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-ai-500 rounded-full animate-pulse"></span>
+              ${m.currentStep}中
+            </span>
+            <i class="fas fa-arrow-up-right-from-square text-[9px] text-ink-300 group-hover:text-ai-500 transition-colors"></i>
+          </div>
         </div>
         <div class="mb-3">
           ${renderSteps(m.steps, true)}
@@ -1642,6 +2077,9 @@ function renderTodayMission() {
             <div class="h-full bg-gradient-to-r from-ai-500 to-indigo-500 rounded-full" style="width:${m.progress}%"></div>
           </div>
           <span class="text-[10px] font-mono font-bold text-ai-700">${m.progress}%</span>
+          <button onclick="event.stopPropagation(); jumpToMission('executing', '${m.id}')" class="text-[10px] text-ai-600 hover:text-ai-700 ml-1">
+            查看完整进度 →
+          </button>
         </div>
       </div>
     </div>`;
@@ -1650,7 +2088,7 @@ function renderTodayMission() {
   // 已完成任务卡
   const renderCompletedCard = (m) => {
     return `
-    <div class="mission-card bg-white rounded-xl border border-success-200 overflow-hidden">
+    <div class="mission-card bg-white rounded-xl border border-success-200 overflow-hidden cursor-pointer hover:border-success-400 hover:shadow-soft transition-all group" onclick="jumpToMission('completed', '${m.id}')">
       <div class="p-3.5 bg-gradient-to-r from-success-50/50 to-transparent">
         <div class="flex items-start justify-between mb-2">
           <div class="flex items-start gap-2 flex-1 min-w-0">
@@ -1662,7 +2100,10 @@ function renderTodayMission() {
               <div class="text-[10px] text-ink-500 mt-0.5">${m.agent} · ${m.completedAt}</div>
             </div>
           </div>
-          ${m.learned ? '<span class="text-[10px] px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded">已沉淀</span>' : ''}
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${m.learned ? '<span class="text-[10px] px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded">已沉淀</span>' : ''}
+            <i class="fas fa-arrow-up-right-from-square text-[9px] text-ink-300 group-hover:text-success-500 transition-colors"></i>
+          </div>
         </div>
         <div class="grid grid-cols-3 gap-2 mt-2">
           <div class="text-center p-1.5 bg-white rounded border border-ink-100">
@@ -1681,6 +2122,12 @@ function renderTodayMission() {
         <div class="mt-2 text-[10px] text-success-700 flex items-start gap-1">
           <i class="fas fa-trophy mt-0.5"></i>
           <span>${m.actualResult}</span>
+        </div>
+        <div class="mt-2 pt-2 border-t border-success-100 flex items-center justify-between" onclick="event.stopPropagation()">
+          <span class="text-[10px] text-ink-400">点击查看复盘详情</span>
+          <button onclick="event.stopPropagation(); jumpToMission('completed', '${m.id}')" class="text-[10px] text-success-700 hover:text-success-800 font-medium">
+            查看复盘 →
+          </button>
         </div>
       </div>
     </div>`;
@@ -1789,20 +2236,29 @@ function renderTodayMission() {
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           ${[
-            {name:'AI 计划员',goal:'准时率>95%',current:'94.2%',progress:94,color:'blue',icon:'fa-calendar-check'},
-            {name:'AI 采购员',goal:'库存健康度>85%',current:'87%',progress:87,color:'emerald',icon:'fa-cart-shopping'},
-            {name:'AI 品控员',goal:'返工率<3.5%',current:'3.2%',progress:91,color:'rose',icon:'fa-shield-halved'},
-            {name:'AI 经营分析师',goal:'归因准确率>90%',current:'91%',progress:91,color:'ai',icon:'fa-chart-pie'}
+            {id:'planner', name:'AI 计划员', goal:'准时率>95%', current:'94.2%', progress:94, color:'blue', icon:'fa-calendar-check', dept:'生产排程部'},
+            {id:'buyer',   name:'AI 采购员', goal:'库存健康度>85%', current:'87%', progress:87, color:'emerald', icon:'fa-cart-shopping', dept:'采购部'},
+            {id:'qc',      name:'AI 品控员', goal:'返工率<3.5%', current:'3.2%', progress:91, color:'rose', icon:'fa-shield-halved', dept:'品控部'},
+            {id:'analyst', name:'AI 经营分析师', goal:'归因准确率>90%', current:'91%', progress:91, color:'ai', icon:'fa-chart-pie', dept:'经营分析部'}
           ].map(a => `
-            <div class="p-3 border border-ink-200 rounded-lg hover:border-${a.color}-300 cursor-pointer" onclick="navigate('agents')">
+            <div class="relative p-3 border border-ink-200 rounded-lg hover:border-${a.color}-300 hover:shadow-soft cursor-pointer transition-all group" onclick="showAgentDetail('${a.id}')">
               <div class="flex items-center gap-2 mb-2">
                 <div class="w-7 h-7 rounded-lg bg-${a.color}-500 flex items-center justify-center text-white text-[10px]">
                   <i class="fas ${a.icon}"></i>
                 </div>
-                <div class="text-[11px] font-semibold text-ink-900">${a.name}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] font-semibold text-ink-900">${a.name}</div>
+                  <div class="text-[9px] text-ink-400">${a.dept}</div>
+                </div>
+                <i class="fas fa-arrow-up-right-from-square text-[9px] text-ink-300 group-hover:text-${a.color}-500 transition-colors"></i>
               </div>
               <div class="text-[10px] text-ink-500 mb-0.5">🎯 ${a.goal}</div>
-              <div class="text-[11px] font-bold text-${a.color}-700 font-mono mb-1">当前 ${a.current}</div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-bold text-${a.color}-700 font-mono">当前 ${a.current}</span>
+                <button onclick="event.stopPropagation(); showAgentConfig('${a.id}')" class="text-[9px] text-ink-400 hover:text-${a.color}-600 px-1.5 py-0.5 hover:bg-${a.color}-50 rounded transition-colors">
+                  <i class="fas fa-sliders"></i> 配置
+                </button>
+              </div>
               <div class="bg-ink-100 rounded-full h-1 overflow-hidden">
                 <div class="h-full bg-${a.color}-500" style="width:${a.progress}%"></div>
               </div>
@@ -1854,10 +2310,6 @@ function renderTodayMission() {
        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">取消</button>`
     );
   };
-
-  window.viewMissionDetail = (id) => {
-    navigate('mission-center');
-  };
 }
 
 /* ============== 8.5. AI 执行中心（Mission Center）============== */
@@ -1888,7 +2340,7 @@ function renderMissionCenter() {
   const renderPendingCard = (m) => {
     const prioColor = m.priority === 'P0' ? 'danger' : m.priority === 'P1' ? 'warn' : 'brand';
     return `
-    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden">
+    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden" data-mission-id="${m.id}">
       <!-- 顶部：6步闭环 -->
       <div class="p-4 bg-gradient-to-r from-${prioColor}-50/30 to-ai-50/30 border-b border-ink-100">
         ${renderSteps(m.steps)}
@@ -2007,7 +2459,7 @@ function renderMissionCenter() {
 
   const renderExecutingCard = (m) => {
     return `
-    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden exec-card-pulse">
+    <div class="mission-card bg-white rounded-2xl border border-ink-200 overflow-hidden exec-card-pulse" data-mission-id="${m.id}">
       <div class="p-4 bg-gradient-to-r from-ai-50/40 to-transparent border-b border-ink-100">
         ${renderSteps(m.steps)}
       </div>
@@ -2065,7 +2517,7 @@ function renderMissionCenter() {
 
   const renderCompletedCard = (m) => {
     return `
-    <div class="mission-card bg-white rounded-2xl border border-success-200 overflow-hidden">
+    <div class="mission-card bg-white rounded-2xl border border-success-200 overflow-hidden" data-mission-id="${m.id}">
       <div class="p-4 bg-gradient-to-r from-success-50 to-emerald-50 border-b border-success-200">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3">
@@ -2229,92 +2681,41 @@ function renderMissionCenter() {
       setTimeout(() => renderMissionCenter(), 600);
     }
   };
+
+  // 处理跨页跳转定位(从 Today Mission 三栏卡片跳过来时)
+  if (missionCenterTarget) {
+    const target = missionCenterTarget;
+    missionCenterTarget = null;  // 消费,避免下次进入还触发
+    setTimeout(() => {
+      // 1. 切到对应 Tab
+      switchMissionTab(target.tab);
+      // 2. 找到目标卡片,滚动 + 高亮
+      setTimeout(() => {
+        const el = document.querySelector(`[data-mission-id="${target.id}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // 强制重排后加 class,确保动画触发
+          void el.offsetWidth;
+          el.classList.add('mission-highlight');
+          setTimeout(() => el.classList.remove('mission-highlight'), 3000);
+        } else {
+          showToast('⚠️ 该任务可能已处理或已闭环', 'warn');
+        }
+      }, 80);  // 等 switchMissionTab 完成 DOM 渲染
+    }, 50);   // 等 renderMissionCenter 完成首次 DOM 渲染
+  }
 }
+
+// 全局跳转函数(给 Today Mission 三栏卡片使用)
+window.jumpToMission = (tab, id) => {
+  missionCenterTarget = { tab, id };
+  navigate('mission-center');
+};
 
 /* ============== 9. Agent Mission Center（数字员工工作台 升级版）============== */
 function renderAgents() {
-  const agents = [
-    {id:'planner', name:'AI 计划员', icon:'fa-calendar-check', dept:'生产排程部', color:'from-blue-500 to-cyan-500', acc:89, trend:'+2%',
-      monthlyGoal:'确保订单准时率 > 95%（当前94.2%）',
-      currentTasks:14, executing:'30天排产方案发布', execProgress:83,
-      pending:3, pendingItems:[
-        '调整缝制B组保养期间的产能分配',
-        '订单HT-0625-002提前到本周五开工',
-        '外协2000件给佛山金辉'
-      ],
-      contributions:[
-        {label:'追回延期', value:'8次', icon:'fa-clock'},
-        {label:'节省工时', value:'142h', icon:'fa-hourglass-half'},
-        {label:'产能利用率提升', value:'+12%', icon:'fa-gauge-high'},
-        {label:'方案采纳率', value:'92%', icon:'fa-thumbs-up'}
-      ],
-      accuracyTrend:[78,80,82,83,85,86,87,87,88,89,90,92],
-      kpi:[{n:'排产建议采纳率',v:'92%'},{n:'交期预测准确率',v:'89%'},{n:'产能利用率',v:'87%'},{n:'本月节省工时',v:'142h'}],
-      history:[
-        {time:'08:30',action:'生成30天排产方案',result:'采纳'},
-        {time:'14:20',action:'检测到B组保养冲突',result:'自动调整'},
-        {time:'16:45',action:'外协方案生成',result:'待确认'}
-      ]},
-    {id:'buyer', name:'AI 采购员', icon:'fa-cart-shopping', dept:'采购部', color:'from-emerald-500 to-teal-500', acc:91, trend:'+3%',
-      monthlyGoal:'库存健康度 > 85%（当前87%）',
-      currentTasks:6, executing:'聚酯面料Q3合同锁定', execProgress:67,
-      pending:2, pendingItems:[
-        '锁定聚酯面料Q3合同（预估节省¥15,000）',
-        '黑色涤纶面料紧急采购（已生成订单）'
-      ],
-      contributions:[
-        {label:'本月节省', value:'¥8.6k', icon:'fa-piggy-bank'},
-        {label:'紧急采购', value:'3次', icon:'fa-bolt'},
-        {label:'价格预测准确', value:'88%', icon:'fa-arrow-trend-up'},
-        {label:'库存周转', value:'18天', icon:'fa-arrows-rotate'}
-      ],
-      accuracyTrend:[75,76,78,80,82,83,84,85,86,86,87,88],
-      kpi:[{n:'采购成本节省',v:'¥8.6k/月'},{n:'库存周转天数',v:'18天'},{n:'供应商准时率',v:'94%'},{n:'价格预测准确率',v:'88%'}],
-      history:[
-        {time:'09:15',action:'监控到聚酯面料涨价',result:'已预警'},
-        {time:'11:30',action:'生成紧急采购单PUR-001',result:'已审批'},
-        {time:'15:00',action:'评估Q3合同方案',result:'待确认'}
-      ]},
-    {id:'qc', name:'AI 品控员', icon:'fa-shield-halved', dept:'品控部', color:'from-rose-500 to-pink-500', acc:94, trend:'+1%',
-      monthlyGoal:'返工率 < 3.5%（当前3.2% ✓）',
-      currentTasks:9, executing:'B组返工率整改', execProgress:50,
-      pending:2, pendingItems:[
-        'B组返工率异常整改（4项措施待执行）',
-        '新批次面料预缩工序优化'
-      ],
-      contributions:[
-        {label:'拦截质量问题', value:'15次', icon:'fa-shield'},
-        {label:'一次合格率', value:'97.8%', icon:'fa-check-double'},
-        {label:'返工率', value:'3.2%', icon:'fa-rotate-left'},
-        {label:'检测准确率', value:'99.2%', icon:'fa-bullseye'}
-      ],
-      accuracyTrend:[85,86,88,89,90,91,92,92,93,93,93,94],
-      kpi:[{n:'一次合格率',v:'97.8%'},{n:'返工率',v:'3.2%'},{n:'客户投诉',v:'0.3%'},{n:'检测准确率',v:'99.2%'}],
-      history:[
-        {time:'10:00',action:'检测到B组返工率异常',result:'已分析'},
-        {time:'10:30',action:'生成根因分析报告',result:'已推送'},
-        {time:'13:20',action:'整改方案已制定',result:'执行中'}
-      ]},
-    {id:'analyst', name:'AI 经营分析师', icon:'fa-chart-pie', dept:'经营分析部', color:'from-ai-500 to-indigo-500', acc:91, trend:'+4%',
-      monthlyGoal:'归因准确率 > 90%（当前91% ✓）',
-      currentTasks:5, executing:'本周经营报告生成', execProgress:90,
-      pending:1, pendingItems:[
-        '生成PPT周报（今日18:00前完成）'
-      ],
-      contributions:[
-        {label:'报告生成', value:'48份', icon:'fa-file-powerpoint'},
-        {label:'趋势预测准确', value:'88%', icon:'fa-chart-line'},
-        {label:'决策建议', value:'23条', icon:'fa-lightbulb'},
-        {label:'节省成本', value:'¥32k', icon:'fa-sack-dollar'}
-      ],
-      accuracyTrend:[80,82,84,85,87,88,89,89,90,90,91,91],
-      kpi:[{n:'报告生成数',v:'48份'},{n:'归因准确率',v:'91%'},{n:'趋势预测准确',v:'88%'},{n:'客户满意度',v:'96%'}],
-      history:[
-        {time:'06:00',action:'自动生成日报',result:'已发布'},
-        {time:'14:30',action:'完成利润归因分析',result:'已生成报告'},
-        {time:'17:00',action:'周报PPT生成中',result:'进行中'}
-      ]}
-  ];
+  // 复用全局 agentsData(详情弹窗同源)
+  const agents = agentsData;
 
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
@@ -2328,10 +2729,10 @@ function renderAgents() {
           <p class="text-xs text-ink-500 mt-1">每个AI员工都有明确的<span class="text-ai-600 font-medium">业务目标</span> · 7×24小时为业务创造价值</p>
         </div>
         <div class="flex items-center gap-2">
-          <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-xs hover:bg-ink-50 flex items-center gap-1.5">
+          <button onclick="showAgentConfig()" class="px-3 py-1.5 border border-ink-200 rounded-lg text-xs hover:bg-ink-50 hover:border-ai-300 hover:text-ai-700 flex items-center gap-1.5 transition-colors">
             <i class="fas fa-cog"></i> Agent 配置
           </button>
-          <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-soft">
+          <button onclick="showAddAgent()" class="ai-gradient text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-soft hover:shadow-elevated transition-all">
             <i class="fas fa-plus"></i> 新增 AI 员工
           </button>
         </div>
@@ -2499,6 +2900,75 @@ function renderAgents() {
 }
 
 /* ============== 10. AI 决策中心（AIDecisions）============== */
+// V3.1 决策回填状态(演示用内存态,真实环境写 M13 决策记录表)
+const decisionOverrides = {};
+function backfillDecision(id) {
+  const d = aiDecisions.find(x => x.id === id);
+  if (!d) return;
+  const cur = decisionOverrides[id] || {};
+  showModal('📝 回填决策实际效果 · ' + id, `
+    <div class="space-y-3 text-xs">
+      <div class="p-3 bg-ink-50 rounded-lg">
+        <div class="text-[10px] text-ink-500 mb-1">决策内容</div>
+        <div class="text-ink-800">${d.suggestion}</div>
+        <div class="text-[10px] text-ink-500 mt-2">触发:${d.agent} · 置信度 ${d.confidence}% · 用户操作:${d.userAction}</div>
+      </div>
+      <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="text-[10px] text-blue-700 mb-1">📊 预期效果</div>
+        <div class="text-ink-800">${d.expectedEffect||'-'}</div>
+      </div>
+      <div>
+        <label class="text-[10px] text-ink-500 block mb-1">实际效果(必填) <span class="text-danger-500">*</span></label>
+        <textarea id="bf_actual" rows="2" placeholder="例:延期2天,客户接受,满意度-3%" class="w-full px-2 py-1.5 border border-ink-200 rounded text-xs">${cur.actualEffect||d.actualEffect||''}</textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] text-ink-500 block mb-1">达成判定</label>
+          <select id="bf_effective" class="w-full px-2 py-1.5 border border-ink-200 rounded text-xs bg-white">
+            <option value="true" ${cur.effective===true?'selected':d.effective===true?'selected':''}>✓ 达成预期</option>
+            <option value="false" ${cur.effective===false?'selected':d.effective===false?'selected':''}>✗ 未达成(有偏差)</option>
+            <option value="null" ${cur.effective===null||(!cur.effective && d.effective===undefined)?'selected':''}>进行中(再观察)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-ink-500 block mb-1">回填时间(可追溯)</label>
+          <input id="bf_time" type="text" value="${cur.t||new Date().toISOString().slice(0,16).replace('T',' ')}" class="w-full px-2 py-1.5 border border-ink-200 rounded text-xs font-mono">
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-ink-500 block mb-1">偏差原因 / 备注</label>
+        <textarea id="bf_note" rows="2" placeholder="如:实际偏差来自外部因素(客户临时加单),非建议本身问题" class="w-full px-2 py-1.5 border border-ink-200 rounded text-xs">${cur.note||''}</textarea>
+      </div>
+      <div class="text-[10px] text-ink-500 p-2 bg-amber-50 border border-amber-200 rounded">
+        <i class="fas fa-circle-info text-amber-500 mr-0.5"></i>回填数据将写 M13 决策记录表 · 季度复盘时用于评估建议采纳率/达成率
+      </div>
+    </div>
+  `, `
+    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">取消</button>
+    <button onclick="saveBackfill('${id}')" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+      <i class="fas fa-save"></i> 保存回填
+    </button>
+  `);
+}
+function saveBackfill(id) {
+  const actual = document.getElementById('bf_actual').value.trim();
+  const eff = document.getElementById('bf_effective').value;
+  const note = document.getElementById('bf_note').value.trim();
+  if (!actual) { showToast('请填写实际效果', 'warn'); return; }
+  decisionOverrides[id] = {
+    actualEffect: actual,
+    effective: eff === 'null' ? null : eff === 'true',
+    note,
+    t: document.getElementById('bf_time').value
+  };
+  document.querySelector('#modalContainer .fixed')?.remove();
+  showToast('✓ 已回填,数据写入M13决策记录', 'success', 3000);
+  renderAIDecisions();
+}
+function getEffectiveDecision(d) {
+  const o = decisionOverrides[d.id];
+  return o ? {...d, ...o} : d;
+}
 function renderAIDecisions() {
   // 顶部统计
   const stats = [
@@ -2523,12 +2993,12 @@ function renderAIDecisions() {
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-ai-500 to-indigo-500 text-white rounded-full font-medium">🎯 AI DECISIONS</span>
-            <span class="text-[10px] text-ink-500 font-mono">决策记录 · 效果追踪 · 归因分析</span>
+            <span class="text-[10px] text-ink-500 font-mono">决策记录 · 效果回填 · 季度复盘依据</span>
           </div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-bullseye text-ai-500"></i> AI 决策中心
           </h1>
-          <p class="text-xs text-ink-500 mt-1">每一次AI决策都可追溯、可评估、可学习</p>
+          <p class="text-xs text-ink-500 mt-1">每条决策可追溯、可评估 · 点击"回填"记录实际效果(写 M13 决策记录表)</p>
         </div>
         <div class="flex items-center gap-2 text-xs">
           <select class="px-3 py-1.5 border border-ink-200 rounded-lg">
@@ -2538,6 +3008,14 @@ function renderAIDecisions() {
             <i class="fas fa-download mr-1"></i>导出报告
           </button>
         </div>
+      </div>
+
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">决策日志/采纳/效果字段</span>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">采纳率/达成率统计</span>
+        <div class="ml-auto">${srcTag(['人工','M13'], {mock:true})}</div>
       </div>
 
       <!-- 顶部统计卡片 -->
@@ -2600,38 +3078,47 @@ function renderAIDecisions() {
                 <th class="text-left py-2.5 px-3 font-medium">用户操作</th>
                 <th class="text-left py-2.5 px-3 font-medium">评分</th>
                 <th class="text-left py-2.5 px-3 font-medium">有效性</th>
+                <th class="text-left py-2.5 px-3 font-medium">回填</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-ink-100">
-              ${aiDecisions.map(d => `
+              ${aiDecisions.map(d => {
+                const od = getEffectiveDecision(d);
+                return `
                 <tr class="hover:bg-ink-50/50">
                   <td class="py-3 px-3">
-                    <span class="font-mono text-[10px] text-ink-600">${d.id}</span>
+                    <span class="font-mono text-[10px] text-ink-600">${od.id}</span>
                   </td>
-                  <td class="py-3 px-3 font-mono text-[11px] text-ink-700">${d.time}</td>
+                  <td class="py-3 px-3 font-mono text-[11px] text-ink-700">${od.time}</td>
                   <td class="py-3 px-3">
-                    <span class="px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded text-[10px] font-medium">${d.agent}</span>
+                    <span class="px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded text-[10px] font-medium">${od.agent}</span>
                   </td>
                   <td class="py-3 px-3 max-w-xs">
-                    <div class="text-[11px] text-ink-800 leading-relaxed">${d.suggestion}</div>
+                    <div class="text-[11px] text-ink-800 leading-relaxed">${od.suggestion}</div>
                   </td>
                   <td class="py-3 px-3 max-w-[200px]">
-                    <div class="text-[10px] text-ink-500">预期：${d.expectedEffect||'-'}</div>
-                    <div class="text-[10px] text-ink-700 font-medium">实际：${d.actualEffect||'-'}</div>
+                    <div class="text-[10px] text-ink-500">预期:${od.expectedEffect||'-'}</div>
+                    <div class="text-[10px] text-ink-700 font-medium">实际:${od.actualEffect||'-'}</div>
+                    ${decisionOverrides[od.id]?.t ? `<div class="text-[9px] text-ink-400 mt-0.5"><i class="fas fa-clock-rotate-left"></i> ${decisionOverrides[od.id].t}</div>` : ''}
                   </td>
                   <td class="py-3 px-3">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded ${d.userAction==='采纳'?'bg-success-50 text-success-700':d.userAction==='待确认'?'bg-warn-50 text-warn-700':'bg-ink-100 text-ink-700'}">${d.userAction}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded ${od.userAction==='采纳'?'bg-success-50 text-success-700':od.userAction==='待确认'?'bg-warn-50 text-warn-700':'bg-ink-100 text-ink-700'}">${od.userAction}</span>
                   </td>
                   <td class="py-3 px-3">
-                    ${d.feedback ? `<span class="text-warn-500 text-xs">${'⭐'.repeat(d.feedback)}</span>` : '<span class="text-[10px] text-ink-400">-</span>'}
+                    ${od.feedback ? `<span class="text-warn-500 text-xs">${'⭐'.repeat(od.feedback)}</span>` : '<span class="text-[10px] text-ink-400">-</span>'}
                   </td>
                   <td class="py-3 px-3">
-                    ${d.effective === true ? '<span class="text-[10px] px-1.5 py-0.5 bg-success-50 text-success-700 rounded">✓ 有效</span>' :
-                      d.effective === false ? '<span class="text-[10px] px-1.5 py-0.5 bg-danger-50 text-danger-700 rounded">✗ 偏差</span>' :
+                    ${od.effective === true ? '<span class="text-[10px] px-1.5 py-0.5 bg-success-50 text-success-700 rounded">✓ 有效</span>' :
+                      od.effective === false ? '<span class="text-[10px] px-1.5 py-0.5 bg-danger-50 text-danger-700 rounded">✗ 偏差</span>' :
                       '<span class="text-[10px] px-1.5 py-0.5 bg-ink-100 text-ink-700 rounded">进行中</span>'}
                   </td>
-                </tr>
-              `).join('')}
+                  <td class="py-3 px-3">
+                    <button onclick="backfillDecision('${od.id}')" class="text-[10px] px-2 py-1 border border-ai-300 text-ai-700 rounded hover:bg-ai-50 flex items-center gap-1" title="回填实际效果到 M13 决策记录表">
+                      <i class="fas fa-pen-to-square"></i>${decisionOverrides[od.id] ? '已回填' : '回填'}
+                    </button>
+                  </td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -3730,18 +4217,25 @@ function renderProduction() {
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-industry text-brand-500"></i> 生产管理
-            <span class="text-xs font-normal text-ink-500">AI 排产 · 动态调整</span>
+            <span class="text-xs font-normal text-ink-500">排产 · 工序监控</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">多目标优化：交期 × 设备利用率 × 人工成本 × 换线次数</p>
+          <p class="text-xs text-ink-500 mt-1">规则+启发式排产:最早交期优先 + 产能负载均衡,输出"可行解"(非最优解)</p>
         </div>
         <div class="flex items-center gap-2">
           <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50 flex items-center gap-1.5">
             <i class="fas fa-cube"></i> What-if 仿真
           </button>
           <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-soft">
-            <i class="fas fa-magic-wand-sparkles"></i> AI优化排产
+            <i class="fas fa-magic-wand-sparkles"></i> 生成排产建议
           </button>
         </div>
+      </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">工序效率偏差提醒</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">排产/调整建议(人工采纳)</span>
+        <div class="ml-auto">${srcTag(['M0','M5','DNA'], {mock:true})}</div>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -3763,8 +4257,8 @@ function renderProduction() {
       <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-bold text-ink-900 flex items-center gap-2">
-            📅 AI排产方案 · 未来14天
-            <span class="text-[10px] text-ai-600 bg-ai-50 px-2 py-0.5 rounded">🤖 AI已优化</span>
+            📅 排产方案草案 · 未来14天
+            <span class="text-[10px] text-ai-600 bg-ai-50 px-2 py-0.5 rounded">🤖 规则+启发式(非运筹最优解)</span>
           </h2>
           <div class="flex items-center gap-3 text-[11px]">
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-brand-500 rounded"></span>裁剪</span>
@@ -3869,16 +4363,24 @@ function renderInventory() {
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-boxes-stacked text-brand-500"></i> 进销存
-            <span class="text-xs font-normal text-ink-500">AI 智能补货 · 健康度评分</span>
+            <span class="text-xs font-normal text-ink-500">库存监控 · 补货建议</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">预测未来7天消耗 · 考虑在途采购 · 考虑紧急订单 · 供应商交期</p>
+          <p class="text-xs text-ink-500 mt-1">规则触发:库存低于安全线预警;采购建议由人工确认后转采购单</p>
         </div>
         <div class="flex items-center gap-2">
           <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">出入库登记</button>
           <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-soft">
-            <i class="fas fa-cart-shopping"></i> AI采购建议
+            <i class="fas fa-cart-shopping"></i> 生成采购建议
           </button>
         </div>
+      </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">出入库流水</span>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">库存/呆滞预警</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">补货建议(人工转单)</span>
+        <div class="ml-auto">${srcTag(['M0','M5','M7'], {mock:true})}</div>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -4118,13 +4620,21 @@ function renderQC() {
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-shield-halved text-danger-500"></i> 品控中心
-            <span class="text-xs font-normal text-ink-500">AI 主动监控 · 因果推理</span>
+            <span class="text-xs font-normal text-ink-500">工序质检 · 异常追溯</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">不是"发现问题后记录"，而是"预测问题并预防"</p>
+          <p class="text-xs text-ink-500 mt-1">异常检测基于统计阈值;根因分析呈现"关联线索",最终判断由人工完成</p>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-xs px-2.5 py-1 bg-danger-50 text-danger-700 rounded-full font-medium">⚠️ 2项待处理</span>
         </div>
+      </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">检验记录</span>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">返工率阈值预警</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">整改方案建议</span>
+        <div class="ml-auto">${srcTag(['M0','DNA'], {mock:true})}</div>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -4146,50 +4656,48 @@ function renderQC() {
       <div class="bg-gradient-to-br from-danger-50 to-rose-50 rounded-2xl border-2 border-danger-200 p-5">
         <div class="flex items-center gap-2 mb-3">
           <i class="fas fa-triangle-exclamation text-danger-500 text-xl"></i>
-          <h2 class="text-base font-bold text-danger-700">🔴 AI品控员发现：缝制B组返工率异常</h2>
-          <span class="ml-auto text-[10px] text-danger-600 font-mono">置信度 94%</span>
+          <h2 class="text-base font-bold text-danger-700">🔴 缝制B组返工率异常 · 已超阈值</h2>
+          <span class="ml-auto text-[10px] text-danger-600 font-mono">阈值规则:环比上升>0.3pp</span>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <div class="text-xs font-semibold text-ink-800 mb-2">🔍 因果推理分析</div>
+            <div class="text-xs font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+              🔍 关联线索(非因果归因)
+              <span class="text-[9px] text-ink-500 font-normal">系统呈现同时变化的相关数据,最终根因由质检/主管判定</span>
+            </div>
             <div class="space-y-2">
-              <div class="flex items-center gap-2 text-[11px]">
-                <div class="w-8 text-right text-ink-500 font-mono">40%</div>
-                <div class="flex-1 bg-ink-100 rounded-full h-4 overflow-hidden">
-                  <div class="h-full bg-rose-500 flex items-center px-2 text-[10px] text-white font-medium" style="width:40%">人员因素</div>
-                </div>
-                <div class="w-20 text-[10px] text-ink-600">新员工占比40%</div>
+              <div class="flex items-center gap-2 text-[11px] p-1.5 bg-white/60 rounded">
+                <div class="w-2 h-2 rounded-full bg-rose-500"></div>
+                <span class="text-ink-700">新员工占B组比例</span>
+                <span class="font-mono font-bold text-rose-600 ml-auto">40%</span>
               </div>
-              <div class="flex items-center gap-2 text-[11px]">
-                <div class="w-8 text-right text-ink-500 font-mono">35%</div>
-                <div class="flex-1 bg-ink-100 rounded-full h-4 overflow-hidden">
-                  <div class="h-full bg-warn-500 flex items-center px-2 text-[10px] text-white font-medium" style="width:35%">物料因素</div>
-                </div>
-                <div class="w-20 text-[10px] text-ink-600">面料缩率异常</div>
+              <div class="flex items-center gap-2 text-[11px] p-1.5 bg-white/60 rounded">
+                <div class="w-2 h-2 rounded-full bg-warn-500"></div>
+                <span class="text-ink-700">本周新到面料批次缩率检测</span>
+                <span class="font-mono font-bold text-warn-600 ml-auto">偏高</span>
               </div>
-              <div class="flex items-center gap-2 text-[11px]">
-                <div class="w-8 text-right text-ink-500 font-mono">15%</div>
-                <div class="flex-1 bg-ink-100 rounded-full h-4 overflow-hidden">
-                  <div class="h-full bg-brand-500 flex items-center px-2 text-[10px] text-white font-medium" style="width:15%">设备因素</div>
-                </div>
-                <div class="w-20 text-[10px] text-ink-600">张力未调整</div>
+              <div class="flex items-center gap-2 text-[11px] p-1.5 bg-white/60 rounded">
+                <div class="w-2 h-2 rounded-full bg-brand-500"></div>
+                <span class="text-ink-700">缝纫机#07 张力参数</span>
+                <span class="font-mono font-bold text-brand-600 ml-auto">未调整</span>
               </div>
-              <div class="flex items-center gap-2 text-[11px]">
-                <div class="w-8 text-right text-ink-500 font-mono">10%</div>
-                <div class="flex-1 bg-ink-100 rounded-full h-4 overflow-hidden">
-                  <div class="h-full bg-ai-500 flex items-center px-2 text-[10px] text-white font-medium" style="width:10%">工艺因素</div>
-                </div>
-                <div class="w-20 text-[10px] text-ink-600">复杂度+35%</div>
+              <div class="flex items-center gap-2 text-[11px] p-1.5 bg-white/60 rounded">
+                <div class="w-2 h-2 rounded-full bg-ai-500"></div>
+                <span class="text-ink-700">本周订单工艺复杂度</span>
+                <span class="font-mono font-bold text-ai-600 ml-auto">↑35%</span>
+              </div>
+              <div class="text-[10px] text-amber-700 p-1.5 bg-amber-50 border border-amber-200 rounded mt-2">
+                <i class="fas fa-circle-info mr-0.5"></i>以上是同时间段内与返工率上升<b>同时变化</b>的线索 — 不能直接证明因果
               </div>
             </div>
           </div>
           <div>
-            <div class="text-xs font-semibold text-ink-800 mb-2">📋 整改方案（已按成本效益排序）</div>
+            <div class="text-xs font-semibold text-ink-800 mb-2">📋 整改方案(基于历史相似场景的方案库,按成本效益排序)</div>
             <div class="space-y-1.5">
               ${[
-                {n:'调2名熟练工支援B组',c:'+¥800',e:'返工率↓40%',s:95,rec:true},
-                {n:'调整缝纫机张力参数',c:'¥0',e:'返工率↓25%',s:88},
-                {n:'该批次面料增加预缩工序',c:'+¥300',e:'返工率↓20%',s:82},
+                {n:'调2名熟练工支援B组',c:'+¥800',e:'类似场景历史效果:返工率↓40%',s:95,rec:true},
+                {n:'调整缝纫机张力参数',c:'¥0',e:'类似场景历史效果:返工率↓25%',s:88},
+                {n:'该批次面料增加预缩工序',c:'+¥300',e:'类似场景历史效果:返工率↓20%',s:82},
                 {n:'新员工增加2天跟岗培训',c:'+¥1,200',e:'长期收益+15%',s:78}
               ].map(p => `
                 <div class="p-2 border ${p.rec?'border-success-300 bg-success-50/30':'border-ink-200'} rounded">
@@ -4198,7 +4706,7 @@ function renderQC() {
                       ${p.rec?'<i class="fas fa-star text-success-500 text-[10px]"></i>':''}
                       ${p.n}
                     </div>
-                    <div class="text-[10px] font-mono text-ink-500">评分 ${p.s}</div>
+                    <div class="text-[10px] font-mono text-ink-500">参考分 ${p.s}</div>
                   </div>
                   <div class="text-[10px] text-ink-500 mt-0.5">成本 <span class="font-mono">${p.c}</span> · ${p.e}</div>
                 </div>
@@ -4209,9 +4717,9 @@ function renderQC() {
         <div class="mt-4 p-3 bg-white border border-ink-200 rounded-lg flex items-center gap-3">
           <i class="fas fa-lightbulb text-success-500"></i>
           <div class="flex-1 text-[11px] text-ink-700">
-            <span class="font-semibold">AI推荐方案①②③组合：</span>预计综合效果 → 返工率恢复至 3.2%（正常水平）
+            <span class="font-semibold">采纳以上方案,效果将在7天后回写到M13看板</span>(系统自动追踪是否真的下降)
           </div>
-          <button onclick="showToast('已执行整改方案','success')" class="text-[11px] px-3 py-1 ai-gradient text-white rounded">✓ 采纳组合方案</button>
+          <button onclick="showToast('已采纳方案,7天后回看效果','success')" class="text-[11px] px-3 py-1 ai-gradient text-white rounded">✓ 采纳(L2·人工确认)</button>
           <button class="text-[11px] px-3 py-1 border border-ink-300 rounded">查看详情</button>
         </div>
       </div>
@@ -4222,7 +4730,8 @@ function renderQC() {
           <canvas id="qcChart" height="200"></canvas>
         </div>
         <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-          <h3 class="text-sm font-bold text-ink-900 mb-3">📝 返工原因分布</h3>
+          <h3 class="text-sm font-bold text-ink-900 mb-1">📝 返工原因分布</h3>
+          <p class="text-[10px] text-ink-500 mb-3">基于近90天历史返工单的质检员标注 · 仅供参考,非本期根因</p>
           <div class="space-y-2">
             ${[
               {r:'面料缩水',p:45,c:'danger'},
@@ -4265,9 +4774,9 @@ function renderFinance() {
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-coins text-emerald-500"></i> 财务结算
-            <span class="text-xs font-normal text-ink-500">AI 经营分析师 · 自动洞察</span>
+            <span class="text-xs font-normal text-ink-500">成本核算 · 毛利归因</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">本月数据 · 2026年6月</p>
+          <p class="text-xs text-ink-500 mt-1">按公式汇总;毛利归因逐项可拆解到订单/物料/工时真实数据源</p>
         </div>
         <div class="flex items-center gap-2">
           <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">导出报表</button>
@@ -4293,55 +4802,77 @@ function renderFinance() {
         `).join('')}
       </div>
 
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">成本异常项自动汇总</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">毛利归因关联呈现(人工确认)</span>
+        <div class="ml-auto">${srcTag(['订单','M5','M7','M8'], {mock:true})}</div>
+      </div>
+
       <div class="bg-gradient-to-br from-ai-50 via-brand-50 to-cyan-50 rounded-2xl border border-ai-200 p-5">
         <h2 class="text-base font-bold text-ink-900 mb-3 flex items-center gap-2">
-          🤖 AI经营分析师：利润归因分析
-          <span class="text-[10px] text-ai-600 bg-white px-2 py-0.5 rounded">置信度 91%</span>
+          🤖 毛利归因:多维度关联分析
+          <span class="text-[10px] text-ai-600 bg-white px-2 py-0.5 rounded">每项可点击展开数据来源追溯</span>
         </h2>
         <div class="text-[11px] text-ink-700 mb-3">
-          本月毛利率 28.3%（上月 32.1%），<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span>。AI已完成多维度归因：
+          本月毛利率 28.3%(上月 32.1%),<span class="text-danger-600 font-semibold">下降 3.8 个百分点</span>。系统将成本项变动按"金额差"拆解到具体订单/物料/工时:
         </div>
         <div class="space-y-2 mb-4">
           ${[
-            {r:'面料成本 ↑5.2%',d:'聚酯价格上涨 + 紧急采购溢价',p:2.1,c:'danger',i:1},
-            {r:'外协费用 ↑8%',d:'缝制产能不足，外协比例15%→25%',p:1.5,c:'warn',i:2},
-            {r:'返工成本 ↑12%',d:'新员工培训不足',p:0.8,c:'brand',i:3},
-            {r:'人工效率 ↓3%',d:'设备保养停机',p:0.4,c:'ink',i:4}
+            {r:'面料成本 ↑5.2%',d:'聚酯价格上涨 + 紧急采购溢价',p:2.1,c:'danger',i:1, src:'M5 物料入库单价(M7采购单 PO-2026-0612/0615/0618) + M1订单HT-0615-001紧急领料'},
+            {r:'外协费用 ↑8%',d:'缝制产能不足,外协比例15%→25%',p:1.5,c:'warn',i:2, src:'M7 外协单 WS-0610/0618/0622 + M3 排产计划(缝制B组负载率从78%→94%)'},
+            {r:'返工成本 ↑12%',d:'新员工培训不足',p:0.8,c:'brand',i:3, src:'M0 工序报工(B组新员工占比40%) + M6 返工单(RW-2026-W22 4单) + 工序工时差异'},
+            {r:'人工效率 ↓3%',d:'设备保养停机',p:0.4,c:'ink',i:4, src:'M0 报工(缝制B组效率76%) + M4 设备保养记录(EQ-MT-2026-0615 8h)'}
           ].map(d => `
-            <div class="p-3 bg-white rounded-lg border border-ink-200">
-              <div class="flex items-center justify-between mb-1.5">
-                <div class="text-xs font-semibold text-ink-800 flex items-center gap-2">
-                  <span class="w-5 h-5 rounded-full bg-${d.c}-100 text-${d.c}-700 text-[10px] font-bold flex items-center justify-center">${d.i}</span>
-                  ${d.r}
+            <details class="p-3 bg-white rounded-lg border border-ink-200 group">
+              <summary class="cursor-pointer list-none">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-semibold text-ink-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-${d.c}-100 text-${d.c}-700 text-[10px] font-bold flex items-center justify-center">${d.i}</span>
+                    ${d.r}
+                    <i class="fas fa-chevron-down text-[9px] text-ink-400 group-open:rotate-180 transition-transform"></i>
+                  </div>
+                  <div class="text-xs font-mono font-bold text-${d.c}-600">影响 -${d.p}%</div>
                 </div>
-                <div class="text-xs font-mono font-bold text-${d.c}-600">影响 -${d.p}%</div>
+                <div class="text-[11px] text-ink-500 ml-7 mt-1">${d.d}</div>
+              </summary>
+              <div class="mt-2 ml-7 p-2 bg-ink-50 rounded border-l-2 border-${d.c}-400 text-[10px]">
+                <div class="text-ink-500 mb-1 flex items-center gap-1"><i class="fas fa-link"></i> 数据来源追溯(可逐项打开原表):</div>
+                <div class="text-ink-700 font-mono">${d.src}</div>
+                <div class="mt-1.5 flex gap-1.5">
+                  <button class="text-[10px] px-2 py-0.5 bg-white border border-ink-200 rounded hover:bg-ink-50">打开源单据</button>
+                  <button class="text-[10px] px-2 py-0.5 bg-white border border-ink-200 rounded hover:bg-ink-50">查看订单明细</button>
+                </div>
               </div>
-              <div class="text-[11px] text-ink-500 ml-7">${d.d}</div>
-            </div>
+            </details>
           `).join('')}
+        </div>
+        <div class="text-[10px] text-amber-700 p-2 bg-amber-50 border border-amber-200 rounded mb-3">
+          <i class="fas fa-circle-info mr-0.5"></i>以上为成本项变动对毛利率的<b>金额分解</b>;各因素之间是否存在因果关系(如"外协增加是否导致毛利率下降")需人工结合业务背景判断
         </div>
         <div class="p-3 bg-white rounded-lg border border-ink-200">
           <div class="text-xs font-semibold text-success-700 mb-2 flex items-center gap-1.5">
-            <i class="fas fa-lightbulb"></i> AI优化建议
+            <i class="fas fa-lightbulb"></i> 基于历史相似场景的方案库(L2·人工确认采纳)
           </div>
           <div class="space-y-1.5 text-[11px] text-ink-700">
             <div class="flex items-center gap-2">
               <span class="text-success-500">①</span>
-              <span>与供应商A重新谈判长期合同（预计节省 ¥15,000/月）</span>
+              <span>与供应商A重新谈判长期合同(类似场景历史:月节省¥14,800)</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-success-500">②</span>
-              <span>优化排产减少外协（AI已生成优化方案）</span>
+              <span>优化排产减少外协(需先查看M3排产方案,人工调整)</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-success-500">③</span>
-              <span>加强新员工培训（AI已生成培训计划）</span>
+              <span>加强新员工培训(需M0/M4/M6数据支撑,由人事+生产主管决定)</span>
             </div>
           </div>
           <div class="mt-3 flex gap-2">
-            <button onclick="showToast('已启动优化方案，预计下月节省 ¥32,000','ai')" class="text-[10px] px-2.5 py-1 ai-gradient text-white rounded">✓ 执行优化方案</button>
+            <button onclick="showToast('方案已转L2待办,效果将由M13看板追踪','success')" class="text-[10px] px-2.5 py-1 ai-gradient text-white rounded">✓ 采纳(L2·转待办)</button>
             <button class="text-[10px] px-2.5 py-1 border border-ink-300 rounded">查看详细分析</button>
-            <button class="text-[10px] px-2.5 py-1 border border-ink-300 rounded">生成PPT报告</button>
+            <button class="text-[10px] px-2.5 py-1 border border-ink-300 rounded">生成报告</button>
           </div>
         </div>
       </div>
@@ -4505,13 +5036,21 @@ function renderOutsourcing() {
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-truck-fast text-brand-500"></i> 外协管理
-            <span class="text-xs font-normal text-ink-500">AI 自动匹配 · 产能调度网络</span>
+            <span class="text-xs font-normal text-ink-500">供应商匹配 · 履约追踪</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">综合考虑：质量 × 交期 × 价格 × 地理 × 历史合作</p>
+          <p class="text-xs text-ink-500 mt-1">供应商准时率/质量评分基于原始交易记录动态计算,非静态录入</p>
         </div>
         <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-soft">
-          <i class="fas fa-magic-wand-sparkles"></i> AI智能匹配
+          <i class="fas fa-magic-wand-sparkles"></i> 生成匹配建议(L2)
         </button>
+      </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">外协单/收货流水</span>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">履约异常告警</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">匹配建议(人工确认)</span>
+        <div class="ml-auto">${srcTag(['M5','M7'], {mock:true})}</div>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -4536,12 +5075,12 @@ function renderOutsourcing() {
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           ${[
-            {n:'佛山金辉印绣花',city:'广东佛山',price:'4.5',days:'5天',quality:'A · 96.2%',score:92,rec:true,color:'from-emerald-500 to-teal-500'},
-            {n:'中山华盛纽扣',city:'广东中山',price:'4.2',days:'7天',quality:'A- · 95%',score:85,color:'from-amber-500 to-orange-500'},
-            {n:'东莞永胜辅料',city:'广东东莞',price:'4.8',days:'3天',quality:'B+ · 93%',score:78,color:'from-blue-500 to-cyan-500'}
+            {n:'佛山金辉印绣花',city:'广东佛山',price:'4.5',days:'5天',quality:'A · 96.2%',score:92,rec:true,color:'from-emerald-500 to-teal-500', orders:18, ontime:'14/18', qpass:'17/18', trend:[85,88,82,90,87,91,89,93,90,92,94,92]},
+            {n:'中山华盛纽扣',city:'广东中山',price:'4.2',days:'7天',quality:'A- · 95%',score:85,color:'from-amber-500 to-orange-500', orders:9, ontime:'7/9', qpass:'8/9', trend:[78,80,82,85,83,86,88,85,87,85,86,85]},
+            {n:'东莞永胜辅料',city:'广东东莞',price:'4.8',days:'3天',quality:'B+ · 93%',score:78,color:'from-blue-500 to-cyan-500', orders:6, ontime:'5/6', qpass:'5/6', trend:[82,80,78,75,76,78,77,79,78,77,78,78]}
           ].map(s => `
             <div class="p-4 border-2 ${s.rec?'border-ai-400 ring-2 ring-ai-100 bg-ai-50/30':'border-ink-200'} rounded-xl card-hover cursor-pointer">
-              ${s.rec ? '<div class="flex items-center gap-1 text-[10px] text-ai-700 font-semibold mb-2"><i class="fas fa-star"></i>AI推荐</div>' : '<div class="h-5"></div>'}
+              ${s.rec ? '<div class="flex items-center gap-1 text-[10px] text-ai-700 font-semibold mb-2"><i class="fas fa-star"></i>推荐</div>' : '<div class="h-5"></div>'}
               <div class="flex items-center gap-2 mb-3">
                 <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center text-white">
                   <i class="fas fa-industry"></i>
@@ -4565,21 +5104,47 @@ function renderOutsourcing() {
                   <div class="font-bold text-success-600 font-mono">${s.quality.split(' ')[0]}</div>
                 </div>
               </div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] text-ink-500">综合评分</span>
-                <div class="flex items-center gap-1.5">
-                  <div class="w-16 h-1.5 bg-ink-100 rounded-full overflow-hidden">
-                    <div class="h-full ${s.score>=85?'bg-success-500':s.score>=70?'bg-warn-500':'bg-danger-500'}" style="width:${s.score}%"></div>
-                  </div>
-                  <span class="text-sm font-bold font-mono ${s.score>=85?'text-success-600':s.score>=70?'text-warn-600':'text-danger-600'}">${s.score}</span>
+              <!-- 动态评分(基于近N单) -->
+              <div class="p-2 bg-ink-50 rounded mb-2">
+                <div class="text-[10px] text-ink-500 mb-1.5 flex items-center justify-between">
+                  <span>近${s.orders}单动态评分</span>
+                  <span class="text-[9px] text-emerald-600"><i class="fas fa-database"></i> 原始交易</span>
                 </div>
+                <div class="grid grid-cols-3 gap-1 text-center text-[10px] mb-2">
+                  <div>
+                    <div class="text-ink-500">准时</div>
+                    <div class="font-mono font-bold ${parseInt(s.ontime.split('/')[0])/parseInt(s.ontime.split('/')[1])>=0.85?'text-success-600':'text-warn-600'}">${s.ontime}</div>
+                  </div>
+                  <div>
+                    <div class="text-ink-500">合格</div>
+                    <div class="font-mono font-bold ${parseInt(s.qpass.split('/')[0])/parseInt(s.qpass.split('/')[1])>=0.85?'text-success-600':'text-warn-600'}">${s.qpass}</div>
+                  </div>
+                  <div>
+                    <div class="text-ink-500">单数</div>
+                    <div class="font-mono font-bold text-ink-700">${s.orders}</div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[10px] text-ink-500">综合评分</span>
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-16 h-1.5 bg-white rounded-full overflow-hidden">
+                      <div class="h-full ${s.score>=85?'bg-success-500':s.score>=70?'bg-warn-500':'bg-danger-500'}" style="width:${s.score}%"></div>
+                    </div>
+                    <span class="text-sm font-bold font-mono ${s.score>=85?'text-success-600':s.score>=70?'text-warn-600':'text-danger-600'}">${s.score}</span>
+                  </div>
+                </div>
+                <!-- 近12单准时率小条 -->
+                <div class="flex items-end gap-0.5 h-3 mt-1" title="近12次合作准时率(每条=1单)">
+                  ${s.trend.map((v,i) => `<div class="flex-1 rounded-sm ${v>=85?'bg-success-400':v>=75?'bg-warn-400':'bg-danger-400'}" style="height:${v/100*12}px"></div>`).join('')}
+                </div>
+                <div class="text-[9px] text-ink-400 mt-0.5 text-right">近12单准时率</div>
               </div>
               <button class="w-full text-[11px] py-1.5 ${s.rec?'ai-gradient text-white':'border border-ink-300 hover:bg-ink-50'} rounded">${s.rec?'✓ 选择合作':'选择'}</button>
             </div>
           `).join('')}
         </div>
-        <div class="mt-3 p-3 bg-ai-50 border border-ai-200 rounded-lg text-[11px] text-ink-700">
-          <i class="fas fa-lightbulb text-ai-500 mr-1"></i> <span class="font-semibold">AI评分模型：</span>质量 × 0.4 + 交期 × 0.3 + 价格 × 0.3
+        <div class="mt-3 p-2.5 bg-ink-50 border border-ink-200 rounded text-[10px] text-ink-600">
+          <i class="fas fa-info-circle text-ai-500 mr-1"></i> <span class="font-semibold">评分依据:</span>综合评分 = 准时率×0.4 + 合格率×0.4 + 价格竞争力×0.2(各指标基于供应商档案表中近N单原始交易记录动态计算,非静态配置)
         </div>
       </div>
 
@@ -4770,11 +5335,11 @@ function renderAlerts() {
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="text-[10px] px-2 py-0.5 bg-gradient-to-r from-danger-500 to-rose-500 text-white rounded-full font-medium">⚠️ RISK CENTER</span>
-            <span class="text-[10px] text-ink-500 font-mono">因果推理 + 闭环追踪 + 经验沉淀</span>
+            <span class="text-[10px] text-ink-500 font-mono">关联呈现 + 闭环追踪 + 经验沉淀</span>
           </div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
             <i class="fas fa-triangle-exclamation text-danger-500"></i> 风险中心
-            <span class="text-xs font-normal text-ink-500">不是"发现问题后记录"，而是"全程闭环追踪"</span>
+            <span class="text-xs font-normal text-ink-500">M12 预警中心 · 全程闭环追踪</span>
           </h1>
         </div>
         <div class="flex items-center gap-2 text-xs">
@@ -4786,6 +5351,12 @@ function renderAlerts() {
           </button>
         </div>
       </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">多模块规则聚合提醒</span>
+        ${lvlBadge('L2')}<span class="text-[10px] text-ink-600">风险处置建议</span>
+        <div class="ml-auto">${srcTag(['M0','M3','M4','M5','M6'], {mock:true})}</div>
 
       <!-- 状态统计 + 闭环统计 -->
       <div class="grid grid-cols-2 md:grid-cols-7 gap-2">
@@ -4918,159 +5489,229 @@ function renderAlerts() {
 
 /* ============== 22. AI 自我进化 ============== */
 function renderEvolution() {
+  // M13 决策记录与效果追踪看板 — PRD §M13:不承诺"周准确率自动提升",只承诺"每条建议效果可查、可复盘"
+  const total = aiDecisions.length;
+  const adopted = aiDecisions.filter(d => d.userAction === '采纳').length;
+  const confirmed = aiDecisions.filter(d => d.effective === true).length;
+  const deviated = aiDecisions.filter(d => d.effective === false).length;
+  const pending = total - adopted - deviated - aiDecisions.filter(d => d.userAction === '待确认').length;
+  const adoptRate = total ? Math.round(adopted / total * 100) : 0;
+  const effRate = adopted ? Math.round(confirmed / adopted * 100) : 0;
+  const totalSaved = aiDecisions.reduce((s, d) => s + (d.effective ? (d.cost || 0) : 0), 0);
+
+  // 按 Agent 统计采纳率 / 达成率(PRD决策记录表的真实应用)
+  const agentStats = {};
+  aiDecisions.forEach(d => {
+    const a = d.agent;
+    if (!agentStats[a]) agentStats[a] = {adopt:0, total:0, eff:0, dev:0};
+    agentStats[a].total++;
+    if (d.userAction === '采纳') {
+      agentStats[a].adopt++;
+      if (d.effective === true) agentStats[a].eff++;
+      else if (d.effective === false) agentStats[a].dev++;
+    }
+  });
+
   document.getElementById('pageContainer').innerHTML = `
     <div class="space-y-5 animate-fade-in">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 class="text-xl font-bold text-ink-900 flex items-center gap-2">
-            <i class="fas fa-dna text-ai-500"></i> AI 自我进化引擎
-            <span class="text-xs font-normal text-ink-500">越用越聪明 · 决策可追溯</span>
+            <i class="fas fa-clipboard-check text-ai-500"></i> M13 决策记录与效果追踪
+            <span class="text-xs font-normal text-ink-500">不承诺"周准确率自动提升",只承诺"每条建议可查可复盘"</span>
           </h1>
-          <p class="text-xs text-ink-500 mt-1">决策记录 · 效果追踪 · 模型微调 · 知识蒸馏</p>
+          <p class="text-xs text-ink-500 mt-1">这是全系统的"闭环仪表盘" · 决定是否值得投入更高等级AI能力的依据</p>
         </div>
         <div class="flex items-center gap-2">
-          <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">查看详细报告</button>
-          <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">调整AI参数</button>
+          <button class="px-3 py-1.5 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">导出季度复盘</button>
+          <button class="ai-gradient text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-soft" onclick="navigate('ai-decisions')">
+            <i class="fas fa-list-ul"></i> 查看完整日志
+          </button>
         </div>
       </div>
 
-      <div class="ai-card rounded-2xl p-5 border border-ai-200 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-48 h-48 opacity-10" style="background:radial-gradient(circle, #8b5cf6, transparent);"></div>
-        <div class="relative grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <div class="text-[10px] text-ink-500">当前模型版本</div>
-            <div class="text-2xl font-bold text-ai-700 font-mono">v2.3.1</div>
-            <div class="text-[10px] text-success-600">↑ 较上周升级</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-ink-500">训练数据量</div>
-            <div class="text-2xl font-bold text-ink-900 font-mono">12,800</div>
-            <div class="text-[10px] text-ink-500">条决策记录</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-ink-500">本周准确率</div>
-            <div class="text-2xl font-bold text-success-600 font-mono">89%</div>
-            <div class="text-[10px] text-success-600">↑ 3% vs 上周</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-ink-500">本周采纳率</div>
-            <div class="text-2xl font-bold text-ink-900 font-mono">94%</div>
-            <div class="text-[10px] text-success-600">↑ 2%</div>
-          </div>
+      <!-- V3.1 本页AI分级 + 数据来源 -->
+      <div class="p-2.5 bg-ink-50/70 border border-ink-200 rounded-lg flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-1.5 text-[10px] text-ink-500 font-medium"><i class="fas fa-layer-group text-ai-500"></i>本页能力分级:</div>
+        ${lvlBadge('L0')}<span class="text-[10px] text-ink-600">决策日志/采纳/效果字段</span>
+        ${lvlBadge('L1')}<span class="text-[10px] text-ink-600">采纳率/达成率统计</span>
+        <div class="ml-auto">${srcTag(['人工','M13'], {mock:true})}</div>
+      </div>
+
+      <!-- 诚信声明 -->
+      <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg flex items-start gap-2.5">
+        <i class="fas fa-shield-halved text-amber-600 text-base mt-0.5"></i>
+        <div class="text-[11px] text-ink-700 leading-relaxed">
+          <div class="font-bold text-amber-700 mb-1">关于"AI自我进化"的诚实说明</div>
+          <ul class="space-y-0.5 list-disc list-inside text-ink-600">
+            <li>本期<span class="font-semibold">不做</span>联邦学习/跨厂知识蒸馏/模型自动微调 — 这些需要专门的MLOps工程,目前仅为概念图</li>
+            <li>真实路径:<span class="font-semibold">每条L2级建议都附"决策ID+依据+预期效果",执行后回填"实际效果",系统累积采纳率与达成率</span>,供季度复盘</li>
+            <li>"准确率"不承诺持续自动提升 — 取决于人工采纳质量、规则参数调整、新数据补充,本质是<span class="font-semibold">"经验库随生产越用越准"</span>,而非"模型自己变聪明"</li>
+          </ul>
         </div>
       </div>
 
+      <!-- 顶部 4 个核心指标(本期真实可信) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+          <div class="text-[10px] text-ink-500">本期决策总数</div>
+          <div class="text-2xl font-bold text-ink-900 font-mono mt-1">${total}</div>
+          <div class="text-[10px] text-ink-500 mt-0.5">条 · 全部可回溯</div>
+        </div>
+        <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+          <div class="text-[10px] text-ink-500">采纳率</div>
+          <div class="text-2xl font-bold text-ai-600 font-mono mt-1">${adoptRate}%</div>
+          <div class="text-[10px] text-ink-500 mt-0.5">${adopted}/${total} · 人工采纳</div>
+        </div>
+        <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+          <div class="text-[10px] text-ink-500">达成率(采纳后)</div>
+          <div class="text-2xl font-bold text-success-600 font-mono mt-1">${effRate}%</div>
+          <div class="text-[10px] text-ink-500 mt-0.5">${confirmed}有效 / ${deviated}偏差</div>
+        </div>
+        <div class="bg-white rounded-xl border border-ink-200 p-4 card-hover">
+          <div class="text-[10px] text-ink-500">采纳后累计节省/收益</div>
+          <div class="text-2xl font-bold text-warn-600 font-mono mt-1">¥${totalSaved.toLocaleString()}</div>
+          <div class="text-[10px] text-ink-500 mt-0.5">每条记录可查来源</div>
+        </div>
+      </div>
+
+      <!-- 各Agent采纳率 vs 达成率(可逐条点击) -->
       <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-        <h2 class="text-base font-bold text-ink-900 mb-3">📈 准确率提升曲线</h2>
-        <canvas id="accChart" height="200"></canvas>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-          <h2 class="text-sm font-bold text-ink-900 mb-3">🎯 Top 3 改进方向</h2>
-          <div class="space-y-2.5">
-            ${[
-              {i:'fa-calendar-check',t:'排产建议准确率',d:'学习了新设备参数',v:'+5%',c:'success'},
-              {i:'fa-clock',t:'交期预测误差',d:'考虑了天气因素',v:'-2天',c:'brand'},
-              {i:'fa-chart-line',t:'采购价格预测',d:'接入了期货数据',v:'+3%',c:'ai'}
-            ].map(d => `
-              <div class="p-3 bg-gradient-to-r from-${d.c}-50 to-transparent border border-${d.c}-200 rounded-lg flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-${d.c}-500 text-white flex items-center justify-center"><i class="fas ${d.i}"></i></div>
-                <div class="flex-1">
-                  <div class="text-xs font-semibold text-ink-900">${d.t}</div>
-                  <div class="text-[10px] text-ink-500">${d.d}</div>
-                </div>
-                <div class="text-lg font-bold font-mono text-${d.c}-600">${d.v}</div>
-              </div>
-            `).join('')}
-          </div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-ink-900 flex items-center gap-2">
+            🤖 各 AI Agent 表现(可逐条点击查看)
+            <span class="text-[10px] font-normal text-ink-500">本期 L1+ 级建议</span>
+          </h2>
+          <span class="text-[10px] text-ink-400">→ 季度复盘:决定是否升级到 L3 自动执行</span>
         </div>
-
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-          <h2 class="text-sm font-bold text-ink-900 mb-3">📋 决策记录（最近）</h2>
-          <div class="space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin">
-            ${aiDecisions.map(d => `
-              <div class="p-2 border border-ink-100 rounded text-[11px] hover:bg-ink-50">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="font-mono text-[10px] text-ink-500">${d.id}</span>
-                  <span class="text-[10px] text-ink-500">${d.time}</span>
-                </div>
-                <div class="flex items-center gap-1.5 mb-1">
-                  <span class="px-1.5 py-0.5 bg-ai-50 text-ai-700 rounded text-[10px]">${d.agent}</span>
-                  <span class="text-ink-800">${d.suggestion}</span>
-                </div>
-                <div class="flex items-center gap-2 text-[10px] text-ink-500">
-                  <span>置信度 ${d.confidence}%</span>
-                  <span>·</span>
-                  <span class="text-${d.userAction==='采纳'?'success':'warn'}-600 font-medium">${d.userAction}</span>
-                  ${d.feedback ? `<span>· 反馈 ⭐${d.feedback}</span>` : ''}
-                </div>
-              </div>
-            `).join('')}
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-ink-50 text-xs text-ink-600">
+              <tr>
+                <th class="text-left py-2.5 px-3 font-medium">Agent</th>
+                <th class="text-left py-2.5 px-3 font-medium">建议数</th>
+                <th class="text-left py-2.5 px-3 font-medium">采纳数</th>
+                <th class="text-left py-2.5 px-3 font-medium">采纳率</th>
+                <th class="text-left py-2.5 px-3 font-medium">达成</th>
+                <th class="text-left py-2.5 px-3 font-medium">偏差</th>
+                <th class="text-left py-2.5 px-3 font-medium">达成率</th>
+                <th class="text-left py-2.5 px-3 font-medium">M级</th>
+                <th class="text-left py-2.5 px-3 font-medium">季度动作建议</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-100">
+              ${Object.entries(agentStats).map(([a, s]) => {
+                const ar = s.total ? Math.round(s.adopt / s.total * 100) : 0;
+                const er = s.adopt ? Math.round(s.eff / s.adopt * 100) : 0;
+                const lv = a.includes('排产') ? 'L2' : a.includes('采购') ? 'L2' : a.includes('品控') ? 'L2' : a.includes('交期') ? 'L2' : 'L1';
+                const sugg = er >= 85 ? '<span class="text-success-600">维持当前等级</span>' : er >= 70 ? '<span class="text-warn-600">下调为L1,需补充数据</span>' : '<span class="text-danger-600">暂停自动建议,改为纯展示</span>';
+                return `<tr class="hover:bg-ink-50/50">
+                  <td class="py-2.5 px-3 text-xs font-semibold text-ink-800">${a}</td>
+                  <td class="py-2.5 px-3 text-xs font-mono">${s.total}</td>
+                  <td class="py-2.5 px-3 text-xs font-mono">${s.adopt}</td>
+                  <td class="py-2.5 px-3 text-xs font-mono font-bold ${ar>=80?'text-success-600':ar>=60?'text-warn-600':'text-danger-600'}">${ar}%</td>
+                  <td class="py-2.5 px-3 text-xs font-mono text-success-600">${s.eff}</td>
+                  <td class="py-2.5 px-3 text-xs font-mono text-danger-600">${s.dev}</td>
+                  <td class="py-2.5 px-3 text-xs font-mono font-bold ${er>=85?'text-success-600':er>=70?'text-warn-600':'text-danger-600'}">${er}%</td>
+                  <td class="py-2.5 px-3">${lvlBadge(lv)}</td>
+                  <td class="py-2.5 px-3 text-[11px]">${sugg}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      <!-- 偏差案例学习 + 闭环回流机制 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-          <h2 class="text-sm font-bold text-ink-900 mb-3">🔄 模型微调</h2>
-          <div class="text-[11px] text-ink-600 mb-3">每周自动运行 · 基于最近30天决策记录+效果反馈</div>
+          <h2 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            📚 偏差案例(本期)
+            <span class="text-[10px] font-normal text-ink-500">回写M2 DNA库 / 调整规则参数</span>
+          </h2>
           <div class="space-y-2">
-            ${[
-              {n:'排产Agent',v:'92%',d:'+5%',c:'success'},
-              {n:'采购Agent',v:'88%',d:'+3%',c:'success'},
-              {n:'品控Agent',v:'94%',d:'+2%',c:'success'},
-              {n:'经营Agent',v:'91%',d:'+4%',c:'success'},
-              {n:'交期Agent',v:'89%',d:'+6%',c:'success'}
-            ].map(a => `
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="w-20 text-ink-600">${a.n}</span>
-                <div class="flex-1 bg-ink-100 rounded-full h-2 overflow-hidden">
-                  <div class="h-full bg-${a.c}-500" style="width:${a.v}"></div>
+            ${aiDecisions.filter(d => d.effective === false).map(d => `
+              <div class="p-2.5 border border-warn-200 bg-warn-50/30 rounded-lg">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-mono text-[10px] text-ink-500">${d.id}</span>
+                  <span class="px-1.5 py-0.5 bg-warn-100 text-warn-700 rounded text-[10px]">${d.agent}</span>
                 </div>
-                <span class="font-mono text-${a.c}-600 w-12 text-right">${a.v}</span>
-                <span class="text-[10px] text-success-600 w-10 text-right">${a.d}</span>
+                <div class="text-[11px] text-ink-800 mb-1">${d.suggestion}</div>
+                <div class="text-[10px] text-ink-500">
+                  <span class="text-ink-600">预期:</span>${d.expectedEffect||'-'}
+                  <span class="ml-2 text-ink-600">实际:</span><span class="text-danger-600 font-medium">${d.actualEffect||'-'}</span>
+                </div>
+                <div class="text-[10px] text-success-700 mt-1"><i class="fas fa-arrow-turn-up mr-0.5"></i>回流动作:已记录到季度复盘待办</div>
               </div>
-            `).join('')}
+            `).join('') || '<div class="text-[11px] text-ink-400 text-center py-4">本期无偏差案例</div>'}
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
-          <h2 class="text-sm font-bold text-ink-900 mb-3">🌐 知识蒸馏 · 行业智慧层</h2>
-          <div class="space-y-2.5">
-            <div class="p-3 bg-gradient-to-br from-ai-50 to-indigo-50 border border-ai-200 rounded-lg">
-              <div class="text-xs font-semibold text-ai-700 mb-1.5 flex items-center gap-1.5">
-                <i class="fas fa-cloud-arrow-up"></i> 本厂经验脱敏上传
+        <div class="bg-gradient-to-br from-ink-50 to-slate-50 rounded-2xl border border-ink-200 p-5">
+          <h2 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+            🔄 闭环回流机制(本期真实能力)
+            <span class="text-[10px] font-normal text-ink-500">而非"AI自动变聪明"</span>
+          </h2>
+          <div class="space-y-2.5 text-[11px]">
+            <div class="p-2.5 bg-white rounded-lg border border-ink-200">
+              <div class="font-semibold text-ink-800 mb-1 flex items-center gap-1.5">
+                <i class="fas fa-1 text-ai-500"></i> 决策记录 → M2 DNA 库
               </div>
-              <div class="text-[11px] text-ink-700 leading-relaxed">本月已上传 38 条最佳实践，模型梯度加密传输，原始数据不出厂。</div>
+              <div class="text-ink-600 leading-relaxed pl-5">
+                实际用料/工时/返工率 → 半自动回写对应款式DNA,作为未来相似款报价/排产依据
+              </div>
             </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-[11px]">
-              <div class="p-2 bg-ink-50 rounded"><div class="text-[10px] text-ink-500">本厂贡献</div><div class="text-lg font-bold text-ink-900">128</div><div class="text-[9px] text-ink-500">条</div></div>
-              <div class="p-2 bg-ink-50 rounded"><div class="text-[10px] text-ink-500">行业总库</div><div class="text-lg font-bold text-ai-600">8,084</div><div class="text-[9px] text-ink-500">条</div></div>
-              <div class="p-2 bg-ink-50 rounded"><div class="text-[10px] text-ink-500">受益工厂</div><div class="text-lg font-bold text-success-600">12</div><div class="text-[9px] text-ink-500">家</div></div>
+            <div class="p-2.5 bg-white rounded-lg border border-ink-200">
+              <div class="font-semibold text-ink-800 mb-1 flex items-center gap-1.5">
+                <i class="fas fa-2 text-ai-500"></i> 交期达成 → 客户档案
+              </div>
+              <div class="text-ink-600 leading-relaxed pl-5">
+                订单实际交付结果(准时/延期天数) → 回写客户档案,影响后续排产优先级判断
+              </div>
             </div>
-            <div class="p-2 bg-success-50 border border-success-200 rounded text-[11px] text-ink-700">
-              <i class="fas fa-shield-halved text-success-500 mr-1"></i> 隐私保护：仅上传模型梯度，原始数据不出厂
+            <div class="p-2.5 bg-white rounded-lg border border-ink-200">
+              <div class="font-semibold text-ink-800 mb-1 flex items-center gap-1.5">
+                <i class="fas fa-3 text-ai-500"></i> 采购到货 → 供应商档案
+              </div>
+              <div class="text-ink-600 leading-relaxed pl-5">
+                实际到货时间/质量 → 回写供应商档案,驱动下次采购推荐排序变化
+              </div>
             </div>
+            <div class="p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+              <div class="font-semibold text-amber-700 mb-1 flex items-center gap-1.5">
+                <i class="fas fa-4 text-amber-500"></i> 远期方向(本期不做)
+              </div>
+              <div class="text-ink-600 leading-relaxed pl-5">
+                跨厂知识共享 / 联邦学习 / 自动模型微调 — 需先累积足够单厂数据,作为 P3+ 评估
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 月度复盘模板 -->
+      <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+        <h2 class="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+          📋 月度复盘模板
+          <span class="text-[10px] font-normal text-ink-500">人工填写,系统汇总</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+          <div class="p-3 bg-ink-50 rounded-lg border border-ink-200">
+            <div class="font-semibold text-ink-800 mb-1.5">① 采纳率 vs 达成率</div>
+            <div class="text-ink-600 leading-relaxed">采纳率上升但达成率下降 → 可能是规则参数过激,需下调阈值</div>
+          </div>
+          <div class="p-3 bg-ink-50 rounded-lg border border-ink-200">
+            <div class="font-semibold text-ink-800 mb-1.5">② 偏差类型聚类</div>
+            <div class="text-ink-600 leading-relaxed">同一类建议连续3次偏差 → 需补充该类型数据或调出L2</div>
+          </div>
+          <div class="p-3 bg-ink-50 rounded-lg border border-ink-200">
+            <div class="font-semibold text-ink-800 mb-1.5">③ L1→L2 升级候选</div>
+            <div class="text-ink-600 leading-relaxed">采纳率≥85%且达成率≥90%的规则 → 评估升级到L2</div>
           </div>
         </div>
       </div>
     </div>
   `;
-  setTimeout(() => {
-    if (typeof Chart === 'undefined' || !document.getElementById('accChart')) return;
-    charts.acc = new Chart(document.getElementById('accChart'), {
-      type:'line', data:{
-        labels:['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'],
-        datasets:[
-          {label:'排产Agent',data:[78,80,82,83,85,86,87,87,88,89,90,92],borderColor:'#3b82f6',tension:0.3},
-          {label:'采购Agent',data:[75,76,78,80,82,83,84,85,86,86,87,88],borderColor:'#10b981',tension:0.3},
-          {label:'品控Agent',data:[85,86,88,89,90,91,92,92,93,93,93,94],borderColor:'#f43f5e',tension:0.3},
-          {label:'经营Agent',data:[80,82,84,85,87,88,89,89,90,90,91,91],borderColor:'#8b5cf6',tension:0.3}
-        ]
-      }, options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{min:70,max:100,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}
-    });
-  }, 100);
 }
 
 /* ============== 23. 组织权限 ============== */
@@ -5351,8 +5992,32 @@ function showDNADetail(id) {
           `).join('')}
         </div>
       </div>
+      <div>
+        <div class="text-xs font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+          📈 标准参数历史更新记录
+          <span class="text-[9px] text-ink-500 font-normal">M2 闭环证据 · 越用越准</span>
+        </div>
+        <div class="space-y-1.5">
+          ${[
+            {v:d.optimalCutRate, prev:'92.5%', prev2:'90.1%', d:0.5, src:'M0 报工+M6 返工 → 自动回写(本季度3次更新)'},
+            {v:d.lossRate, prev:'6.5%', prev2:'7.8%', d:-0.3, src:'M0 裁剪余料实测 → 工艺员确认'},
+            {v:d.baselineDays+'天', prev:(d.baselineDays+0.5)+'天', prev2:(d.baselineDays+1)+'天', d:-0.2, src:'近20单平均交期收敛 → 计划员采纳建议更新'}
+          ].map(h => `
+            <div class="p-2 bg-gradient-to-r from-emerald-50/50 to-white border border-emerald-200 rounded text-[10px]">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-semibold text-ink-800">当前值 <span class="font-mono text-emerald-700">${h.v}</span></span>
+                <span class="text-ink-500 font-mono">${h.prev2} → ${h.prev} → <span class="text-emerald-700 font-bold">${h.v}</span></span>
+              </div>
+              <div class="text-ink-500">📝 ${h.src}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="mt-1.5 text-[9px] text-ink-400 leading-relaxed">
+          <i class="fas fa-lightbulb text-amber-500"></i> 这是"经验库随生产越用越准"的诚实版本 — 不依赖模型自己变聪明,而是每单结案后实际数据回写参数
+        </div>
+      </div>
       <div class="p-2 bg-ink-50 rounded text-[11px] text-ink-700 font-mono">
-        <i class="fas fa-cog mr-1 text-ai-500"></i> 最优参数：${d.params}
+        <i class="fas fa-cog mr-1 text-ai-500"></i> 最优参数:${d.params}
       </div>
       <div class="p-2 bg-ai-50 border border-ai-200 rounded text-[11px] text-ink-700">
         <i class="fas fa-sparkles text-ai-500 mr-1"></i> 基于 <span class="font-bold">${d.orders}</span> 单历史数据 · 成功率 <span class="font-bold text-success-600">${d.successRate}%</span>
@@ -5364,60 +6029,467 @@ function showDNADetail(id) {
   );
 }
 
+/* ============== AI 数字员工 · 详情/配置/新增 ============== */
+
+// 详情弹窗(支持 4 个 Agent + 右侧栏快捷入口)
 function showAgentDetail(type) {
-  const agents = {
-    planner: {n:'AI 计划员',t:'优化未来30天排产',s:'已生成3个调整建议待确认',k:89},
-    buyer: {n:'AI 采购员',t:'监控物料库存 + 价格趋势',s:'聚酯面料涨价3.2%',k:91},
-    qc: {n:'AI 品控员',t:'实时质量数据监控',s:'B组返工率异常',k:94},
-    analyst: {n:'AI 经营分析师',t:'生成本周经营报告',s:'归因完成',k:91}
-  };
-  const a = agents[type];
-  showModal(`${a.n} · 详情`,
+  const a = agentsData.find(x => x.id === type);
+  if (!a) return;
+
+  // 12 周准确率 sparkline
+  const trendMax = Math.max(...a.accuracyTrend);
+  const trendMin = Math.min(...a.accuracyTrend);
+  const points = a.accuracyTrend.map((v, i) => {
+    const x = (i / (a.accuracyTrend.length - 1)) * 100;
+    const y = 100 - ((v - trendMin) / (trendMax - trendMin || 1)) * 100;
+    return `${x},${y}`;
+  }).join(' ');
+
+  showModal(`${a.name} · 详情`,
     `<div class="space-y-3 text-xs">
-      <div class="p-3 ai-card rounded-lg border border-ai-200">
-        <div class="text-[10px] text-ai-700 font-semibold mb-1">当前任务</div>
-        <div class="text-ink-800">${a.t}</div>
-        <div class="text-[10px] text-ink-500 mt-1">最新成果：${a.s}</div>
-        <div class="text-[10px] text-ink-500 mt-1">历史准确率：<span class="font-mono text-success-600">${a.k}%</span></div>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-ink-800 mb-2">📊 关键指标</div>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="p-2 bg-ink-50 rounded text-center">
-            <div class="text-[10px] text-ink-500">采纳率</div>
-            <div class="text-lg font-bold text-success-600 font-mono">92%</div>
+      <!-- 顶部 Hero(渐变色块,呼应 Agent 主题色) -->
+      <div class="bg-gradient-to-r ${a.color} p-4 rounded-xl text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 opacity-10" style="background:radial-gradient(circle, white, transparent);"></div>
+        <div class="relative flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl">
+              <i class="fas ${a.icon}"></i>
+            </div>
+            <div>
+              <div class="text-base font-bold">${a.name}</div>
+              <div class="text-[11px] text-white/80">${a.dept} · 模型 ${a.config.modelVersion}</div>
+              <div class="text-[10px] text-white/70 mt-0.5">
+                <i class="fas fa-bolt"></i> 工作中
+                <span class="ml-2 text-success-200">↑ ${a.trend} 本周</span>
+              </div>
+            </div>
           </div>
-          <div class="p-2 bg-ink-50 rounded text-center">
-            <div class="text-[10px] text-ink-500">响应时间</div>
-            <div class="text-lg font-bold text-brand-600 font-mono">1.2s</div>
-          </div>
-          <div class="p-2 bg-ink-50 rounded text-center">
-            <div class="text-[10px] text-ink-500">本月建议</div>
-            <div class="text-lg font-bold text-ink-900 font-mono">156</div>
-          </div>
-          <div class="p-2 bg-ink-50 rounded text-center">
-            <div class="text-[10px] text-ink-500">节省</div>
-            <div class="text-lg font-bold text-ai-600 font-mono">¥8.6k</div>
+          <div class="text-right">
+            <div class="text-[10px] text-white/70">当前准确率</div>
+            <div class="text-2xl font-bold font-mono">${a.acc}%</div>
           </div>
         </div>
       </div>
+
+      <!-- 🎯 本月目标 -->
+      <div class="p-3 bg-gradient-to-r from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
+        <div class="text-[10px] font-bold text-ai-700 mb-1">🎯 本月目标</div>
+        <div class="text-[12px] font-medium text-ink-900">${a.monthlyGoal}</div>
+      </div>
+
+      <!-- 📊 关键指标 KPI(4 列) -->
       <div>
-        <div class="text-xs font-semibold text-ink-800 mb-2">⚙️ Agent 配置</div>
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded text-[11px]">
-            <span>自动执行阈值</span><span class="font-mono text-ink-700">¥10,000</span>
+        <div class="text-xs font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+          <i class="fas fa-chart-line text-ai-500"></i> 关键指标
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+          ${a.kpi.map(k => `
+            <div class="p-2 bg-gradient-to-br from-${a.accent}-50 to-white border border-${a.accent}-100 rounded-lg text-center">
+              <div class="text-[10px] text-ink-500 leading-tight h-7 flex items-center justify-center">${k.n}</div>
+              <div class="text-base font-bold text-${a.accent}-700 font-mono mt-1">${k.v}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 📈 准确率趋势 sparkline -->
+      <div class="p-3 bg-gradient-to-r from-emerald-50 to-success-50 border border-success-200 rounded-lg">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[10px] text-success-700 font-semibold">📈 准确率趋势(近 12 周)</span>
+          <span class="text-[10px] text-success-700 font-mono font-bold">${a.accuracyTrend[a.accuracyTrend.length-1]}%</span>
+        </div>
+        <svg viewBox="0 0 100 40" class="w-full h-10" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#10b981" stroke-width="1.8" points="${points}" />
+          <polyline fill="url(#detailGrad-${type})" stroke="none" points="${points} 100,100 0,100" />
+          <defs>
+            <linearGradient id="detailGrad-${type}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- 🏆 本月贡献 + 📜 近期活动(双列) -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="p-3 bg-warn-50/40 border border-warn-200 rounded-lg">
+          <div class="text-[10px] text-warn-700 font-semibold mb-2">🏆 本月贡献</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            ${a.contributions.map(c => `
+              <div class="text-center p-1.5 bg-white rounded border border-warn-100">
+                <i class="fas ${c.icon} text-warn-500 text-[10px] mb-0.5"></i>
+                <div class="text-[11px] font-bold text-ink-900 font-mono">${c.value}</div>
+                <div class="text-[8px] text-ink-500 leading-tight">${c.label}</div>
+              </div>
+            `).join('')}
           </div>
-          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded text-[11px]">
-            <span>推送频率</span><span class="text-ink-700">实时</span>
+        </div>
+        <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+          <div class="text-[10px] text-ink-700 font-semibold mb-2">📜 近期活动</div>
+          <div class="space-y-1.5">
+            ${a.history.map(h => `
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="font-mono text-ink-400 shrink-0">${h.time}</span>
+                <span class="flex-1 text-ink-700 truncate">${h.action}</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                  h.result==='采纳'||h.result==='已发布'||h.result==='已签约'||h.result==='已应用' ? 'bg-success-100 text-success-700' :
+                  h.result==='进行中'||h.result==='执行中'||h.result==='待确认'||h.result==='自动调整' ? 'bg-ai-100 text-ai-700' :
+                  h.result==='已审批'||h.result==='已下单'||h.result==='已生成报告' || h.result==='已分析' ? 'bg-brand-100 text-brand-700' :
+                  h.result==='已预警'||h.result==='已推送'||h.result==='已制定' ? 'bg-warn-100 text-warn-700' :
+                  'bg-ink-100 text-ink-700'
+                }">${h.result}</span>
+              </div>
+            `).join('')}
           </div>
-          <div class="flex items-center justify-between p-1.5 bg-ink-50 rounded text-[11px]">
-            <span>权限范围</span><span class="text-ink-700">厂长 + 计划员</span>
+        </div>
+      </div>
+
+      <!-- ⚙️ 配置预览(只读,引导用户点"调整配置") -->
+      <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[10px] text-ink-700 font-semibold flex items-center gap-1.5">
+            <i class="fas fa-sliders text-ai-500"></i> Agent 配置(只读)
+          </div>
+          <button onclick="this.closest('.fixed').remove(); showAgentConfig('${a.id}')" class="text-[10px] text-ai-600 hover:text-ai-700 font-medium">
+            调整配置 →
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+          <div class="flex items-center justify-between p-1.5 bg-white rounded">
+            <span class="text-ink-500">自动执行阈值</span>
+            <span class="font-mono text-ink-700">${a.config.autoThreshold}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 bg-white rounded">
+            <span class="text-ink-500">推送频率</span>
+            <span class="text-ink-700">${a.config.pushFreq}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 bg-white rounded">
+            <span class="text-ink-500">权限范围</span>
+            <span class="text-ink-700">${a.config.scope}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 bg-white rounded">
+            <span class="text-ink-500">学习模式</span>
+            <span class="text-ink-700">${a.config.learningMode}</span>
           </div>
         </div>
       </div>
     </div>`,
-    `<button onclick="this.closest('.fixed').remove(); showToast('已打开Agent配置','ai')" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm">调整配置</button>
-     <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">关闭</button>`
+    `<button onclick="this.closest('.fixed').remove(); showAgentConfig('${a.id}')" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+      <i class="fas fa-sliders"></i> 调整配置
+    </button>
+     <button onclick="this.closest('.fixed').remove(); navigate('agents')" class="px-4 py-2 border border-ink-200 rounded-lg text-sm hover:bg-ink-50">
+       查看 Agent Mission Center
+     </button>
+     <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-ink-500 hover:text-ink-700 text-sm">关闭</button>`
+  );
+}
+
+// Agent 配置中心(无参:管理 4 个 Agent;有参:配置单个 Agent)
+function showAgentConfig(type) {
+  // 单个 Agent 配置(从详情跳转)
+  if (type) {
+    const a = agentsData.find(x => x.id === type);
+    if (!a) return;
+    showModal(`⚙️ Agent 配置 · ${a.name}`,
+      `<div class="space-y-3 text-xs">
+        <!-- 顶部信息 -->
+        <div class="flex items-center gap-3 p-3 bg-gradient-to-r ${a.color} rounded-lg text-white">
+          <div class="w-10 h-10 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center text-lg">
+            <i class="fas ${a.icon}"></i>
+          </div>
+          <div class="flex-1">
+            <div class="font-bold">${a.name}</div>
+            <div class="text-[10px] text-white/80">${a.dept} · 模型 ${a.config.modelVersion}</div>
+          </div>
+          <span class="px-2 py-0.5 bg-white/20 rounded-full text-[10px]">准确率 ${a.acc}%</span>
+        </div>
+
+        <!-- 自动执行阈值 -->
+        <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+            <i class="fas fa-coins text-warn-500"></i> 自动执行阈值
+          </div>
+          <div class="text-[10px] text-ink-500 mb-2">低于该金额的方案可由 AI 自动执行,无需人工审批</div>
+          <div class="flex items-center gap-2">
+            <input type="text" value="${a.config.autoThreshold}" class="flex-1 px-3 py-1.5 border border-ink-200 rounded text-xs font-mono">
+            <span class="text-[10px] text-ink-500">当前: ${a.config.autoThreshold}</span>
+          </div>
+        </div>
+
+        <!-- 推送频率 -->
+        <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+            <i class="fas fa-bell text-brand-500"></i> 推送频率
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            ${['实时','每小时','每日','每周'].map(f => `
+              <button class="px-2 py-1.5 border rounded text-[10px] ${f===a.config.pushFreq?'border-ai-500 bg-ai-50 text-ai-700 font-semibold':'border-ink-200 text-ink-600 hover:bg-ink-50'}">${f}</button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 权限范围 -->
+        <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+            <i class="fas fa-users text-ai-500"></i> 权限范围(谁能查看/审批此 Agent 的方案)
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            ${['超级管理员','厂长','计划员','业务员','仓管','裁剪负责人'].map(r => `
+              <label class="flex items-center gap-1.5 px-2 py-1.5 border border-ink-200 rounded text-[10px] cursor-pointer hover:bg-white">
+                <input type="checkbox" ${a.config.scope.includes(r.split('').slice(0,2).join(''))?'checked':''} class="w-3 h-3">
+                <span class="text-ink-700">${r}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 模型与知识库(只读) -->
+        <div class="p-3 bg-gradient-to-br from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-ai-700 mb-2 flex items-center gap-1.5">
+            <i class="fas fa-brain"></i> 模型与知识库
+          </div>
+          <div class="space-y-1.5 text-[10px]">
+            <div class="flex items-center justify-between p-1.5 bg-white/70 rounded">
+              <span class="text-ink-500">模型版本</span>
+              <span class="font-mono text-ink-700">${a.config.modelVersion}</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 bg-white/70 rounded">
+              <span class="text-ink-500">关联知识库</span>
+              <span class="text-ink-700">${a.config.knowledgeBase}</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 bg-white/70 rounded">
+              <span class="text-ink-500">学习模式</span>
+              <span class="text-ink-700">${a.config.learningMode}</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 bg-white/70 rounded">
+              <span class="text-ink-500">核心能力</span>
+              <span class="text-ink-700">${a.skills.join(' · ')}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 危险区 -->
+        <div class="p-3 bg-danger-50 border border-danger-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-danger-700 mb-1.5 flex items-center gap-1.5">
+            <i class="fas fa-triangle-exclamation"></i> 高级操作
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="showToast('已重置 Agent 配置为默认值','warn')" class="text-[10px] px-3 py-1 border border-danger-300 text-danger-700 rounded hover:bg-danger-100">
+              <i class="fas fa-rotate-left mr-1"></i>恢复默认
+            </button>
+            <button onclick="showToast('已暂停 Agent 工作','warn')" class="text-[10px] px-3 py-1 border border-danger-300 text-danger-700 rounded hover:bg-danger-100">
+              <i class="fas fa-pause mr-1"></i>暂停 Agent
+            </button>
+            <button onclick="showToast('训练任务已加入队列','ai')" class="text-[10px] px-3 py-1 border border-ai-300 text-ai-700 rounded hover:bg-ai-100 ml-auto">
+              <i class="fas fa-graduation-cap mr-1"></i>触发再训练
+            </button>
+          </div>
+        </div>
+      </div>`,
+      `<button onclick="this.closest('.fixed').remove(); showToast('✅ Agent 配置已保存','success',3000)" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+        <i class="fas fa-check"></i> 保存配置
+      </button>
+       <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">取消</button>`
+    );
+    return;
+  }
+
+  // 配置中心总览(从 Agent 页面"Agent 配置"按钮进入)
+  showModal('⚙️ Agent 配置中心',
+    `<div class="space-y-3 text-xs">
+      <div class="p-3 ai-card rounded-lg border border-ai-200">
+        <div class="text-[11px] font-semibold text-ai-700 mb-1">📋 配置说明</div>
+        <div class="text-[11px] text-ink-600 leading-relaxed">
+          每个 AI 数字员工都有<strong>独立的配置策略</strong>。点击下方任一 Agent 可调整:<br/>
+          · 自动执行阈值(低于该金额自动放行)<br/>
+          · 推送频率(实时/小时/日/周)<br/>
+          · 权限范围(谁能查看与审批)<br/>
+          · 模型版本与关联知识库
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${agentsData.map(a => `
+          <div class="p-3 border border-ink-200 rounded-lg hover:border-${a.accent}-300 hover:shadow-soft cursor-pointer transition-all" onclick="this.closest('.fixed').remove(); showAgentConfig('${a.id}')">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-9 h-9 rounded-lg bg-gradient-to-br ${a.color} flex items-center justify-center text-white">
+                <i class="fas ${a.icon}"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-semibold text-ink-900">${a.name}</div>
+                <div class="text-[10px] text-ink-500">${a.dept}</div>
+              </div>
+              <i class="fas fa-chevron-right text-ink-300 text-[10px]"></i>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-[10px]">
+              <div class="p-1.5 bg-ink-50 rounded text-center">
+                <div class="text-ink-500">阈值</div>
+                <div class="font-mono text-ink-800 font-semibold">${a.config.autoThreshold}</div>
+              </div>
+              <div class="p-1.5 bg-ink-50 rounded text-center">
+                <div class="text-ink-500">频率</div>
+                <div class="text-ink-800 font-semibold">${a.config.pushFreq}</div>
+              </div>
+              <div class="p-1.5 bg-ink-50 rounded text-center">
+                <div class="text-ink-500">准确率</div>
+                <div class="font-mono text-${a.accent}-600 font-semibold">${a.acc}%</div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="p-3 bg-gradient-to-r from-ai-50 to-brand-50 border border-ai-200 rounded-lg flex items-center gap-3">
+        <i class="fas fa-lightbulb text-ai-500 text-lg"></i>
+        <div class="flex-1 text-[11px] text-ink-700">
+          需要<strong>新增</strong>一个 AI 数字员工?<button onclick="this.closest('.fixed').remove(); showAddAgent()" class="text-ai-600 hover:text-ai-700 font-medium ml-1 underline">立即创建 →</button>
+        </div>
+      </div>
+    </div>`,
+    `<button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">关闭</button>
+     <button onclick="this.closest('.fixed').remove(); showAddAgent()" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+       <i class="fas fa-plus"></i> 新增 AI 员工
+     </button>`
+  );
+}
+
+// 新增 AI 员工(表单弹窗)
+function showAddAgent() {
+  showModal('➕ 新增 AI 数字员工',
+    `<div class="space-y-3 text-xs">
+      <!-- 顶部引导 -->
+      <div class="p-3 ai-card rounded-lg border border-ai-200">
+        <div class="flex items-center gap-2 mb-1">
+          <i class="fas fa-sparkles text-ai-500"></i>
+          <div class="text-[11px] font-semibold text-ai-700">创建专属 AI 员工</div>
+        </div>
+        <div class="text-[11px] text-ink-600 leading-relaxed">
+          每个 AI 员工都将绑定<strong>专属业务目标 + KPI + 知识库</strong>,自动接管对应流程。
+        </div>
+      </div>
+
+      <!-- 基础信息 -->
+      <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+        <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+          <i class="fas fa-id-card text-brand-500"></i> 基础信息
+        </div>
+        <div class="space-y-2">
+          <div>
+            <label class="text-[10px] text-ink-500 block mb-1">员工名称 <span class="text-danger-500">*</span></label>
+            <input type="text" placeholder="如:AI 跟单员" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs focus:border-ai-400 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">所属部门 <span class="text-danger-500">*</span></label>
+              <select class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs bg-white">
+                <option>生产排程部</option>
+                <option>采购部</option>
+                <option>品控部</option>
+                <option>经营分析部</option>
+                <option>销售部</option>
+                <option>仓储部</option>
+                <option>财务部</option>
+                <option>自定义...</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">图标</label>
+              <div class="grid grid-cols-6 gap-1">
+                ${['fa-robot','fa-user-tie','fa-chart-line','fa-shield-halved','fa-cart-shopping','fa-calendar-check','fa-coins','fa-bullseye','fa-magnifying-glass-chart','fa-truck-fast','fa-boxes-stacked','fa-cog'].map(ic => `
+                  <button type="button" class="aspect-square border ${ic==='fa-robot'?'border-ai-500 bg-ai-50':'border-ink-200'} rounded flex items-center justify-center text-ink-600 hover:border-ai-400 hover:bg-ai-50 transition-colors">
+                    <i class="fas ${ic} text-[10px]"></i>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-ink-500 block mb-1">职责描述 <span class="text-danger-500">*</span></label>
+            <textarea rows="2" placeholder="例:实时监控订单进度,自动识别延期风险并推送预警,辅助业务员跟进客户" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs focus:border-ai-400 focus:outline-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 业务目标 -->
+      <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+        <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+          <i class="fas fa-bullseye text-danger-500"></i> 业务目标与 KPI
+        </div>
+        <div class="space-y-2">
+          <div>
+            <label class="text-[10px] text-ink-500 block mb-1">月度业务目标</label>
+            <input type="text" placeholder="例:确保客户满意度 > 95%(当前92%)" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs focus:border-ai-400 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">核心 KPI 1</label>
+              <input type="text" placeholder="如:客户响应时长" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs">
+            </div>
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">目标值</label>
+              <input type="text" placeholder="如:≤2h" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs font-mono">
+            </div>
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">核心 KPI 2</label>
+              <input type="text" placeholder="如:预警准确率" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs">
+            </div>
+            <div>
+              <label class="text-[10px] text-ink-500 block mb-1">目标值</label>
+              <input type="text" placeholder="如:>90%" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs font-mono">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 权限与触发 -->
+      <div class="p-3 bg-ink-50 border border-ink-200 rounded-lg">
+        <div class="text-[11px] font-semibold text-ink-800 mb-2 flex items-center gap-1.5">
+          <i class="fas fa-sliders text-ai-500"></i> 权限与触发策略
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] text-ink-500 block mb-1">自动执行阈值</label>
+            <input type="text" value="¥5,000" class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs font-mono">
+          </div>
+          <div>
+            <label class="text-[10px] text-ink-500 block mb-1">推送频率</label>
+            <select class="w-full px-3 py-1.5 border border-ink-200 rounded text-xs bg-white">
+              <option>实时</option><option>每小时</option><option>每日 6:00</option><option>每周一</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-ink-500 block mb-1">关联业务场景(可多选)</label>
+            <div class="grid grid-cols-3 gap-1.5">
+              ${['订单接单','排产调度','物料采购','质量检测','库存预警','交期管理','外协协调','财务对账','客户跟进','经营分析','设备维护','版单开发'].map(s => `
+                <label class="flex items-center gap-1.5 px-2 py-1 border border-ink-200 rounded text-[10px] cursor-pointer hover:bg-white">
+                  <input type="checkbox" class="w-3 h-3">
+                  <span class="text-ink-700">${s}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 知识库绑定 -->
+      <div class="p-3 bg-gradient-to-br from-ai-50 to-brand-50 border border-ai-200 rounded-lg">
+        <div class="text-[11px] font-semibold text-ai-700 mb-2 flex items-center gap-1.5">
+          <i class="fas fa-brain"></i> 关联 Factory Brain(可多选)
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          ${['客户 DNA','供应商 DNA','工艺 DNA','质量 DNA','设备 DNA','订单数据','库存数据','财务数据'].map(d => `
+            <label class="flex items-center gap-1.5 px-2 py-1.5 bg-white/70 border border-ai-100 rounded text-[10px] cursor-pointer hover:bg-white">
+              <input type="checkbox" checked class="w-3 h-3">
+              <span class="text-ink-700">${d}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    </div>`,
+    `<button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-ink-200 rounded-lg text-sm">取消</button>
+     <button onclick="this.closest('.fixed').remove(); showToast('🤖 AI 员工已创建并启动训练,预计10分钟上线','ai',4000)" class="ai-gradient text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+       <i class="fas fa-rocket"></i> 创建并启用
+     </button>`
   );
 }
 
@@ -5507,7 +6579,7 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   console.log('秩云AI Factory OS V3.0 演示版已加载');
 });
-</script>
+
 </body>
 </html>
 </body>
